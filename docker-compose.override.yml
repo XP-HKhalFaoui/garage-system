@@ -1,0 +1,27 @@
+# Utilisé automatiquement par docker compose up (sans -f flag)
+# Lance l'API avec dotnet watch et Vite en mode dev HMR
+services:
+  api:
+    build:
+      target: build
+    volumes:
+      - ./backend:/app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      ASPNETCORE_URLS: http://+:8080
+    command: ["dotnet", "watch", "run", "--project", "GarageSystem.Api", "--no-launch-profile"]
+
+  web:
+    build:
+      target: builder  # stop at builder stage, use dev server
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["yarn", "dev", "--host", "0.0.0.0"]
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8080
+      VITE_HMR_HOST: localhost
+      VITE_HMR_PORT: "5173"

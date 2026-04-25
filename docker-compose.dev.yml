@@ -1,0 +1,40 @@
+# docker-compose.dev.yml — dev overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   or:  COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml docker compose up
+
+services:
+
+  db:
+    # Keep 5432 exposed (default in base) — nothing to override.
+    environment:
+      POSTGRES_PASSWORD: dev_password   # safe to hardcode in dev only
+
+  api:
+    build:
+      target: build           # stop at the SDK stage — no publish step
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: >-
+        Host=db;Port=5432;
+        Database=${POSTGRES_DB:-garage_db};
+        Username=${POSTGRES_USER:-garage_user};
+        Password=dev_password;
+        Pooling=true;
+    volumes:
+      - ./backend:/app          # live source mount for dotnet watch
+    command: ["dotnet", "watch", "run", "--project", "GarageSystem.Api"]
+    ports:
+      - "5000:5000"
+      - "5001:5001"             # HTTPS dev cert port
+
+  web:
+    build:
+      target: deps              # only install node_modules, skip build
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules       # anonymous volume to isolate host node_modules
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    ports:
+      - "5173:5173"             # Vite HMR port
+    environment:
+      VITE_API_URL: http://localhost:5000

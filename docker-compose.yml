@@ -1,0 +1,87 @@
+name: garage-system
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Base configuration — works standalone for local dev (no profile flag needed).
+# Override files:
+#   dev  → docker-compose.dev.yml   (hot-reload, source mounts, debug ports)
+#   prod → docker-compose.prod.yml  (resource limits, restart policies, TLS)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL 16 ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: garage_db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro   # seed scripts
+    ports:
+      - "5432:5432"       # exposed for local tooling; remove in prod override
+    networks:
+      - garage-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── ASP.NET Core 8 API ─────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: final               # multi-stage final stage (override to "build" in dev)
+    container_name: garage_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ASPNETCORE_ENVIRONMENT:      ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS:             http://+:8080
+      ConnectionStrings__Default: >-
+        Host=db;Port=5432;
+        Database=${POSTGRES_DB};
+        Username=${POSTGRES_USER};
+        Password=${POSTGRES_PASSWORD};
+        Pooling=true;
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - garage-net
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── Nginx → Vite build ─────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: garage_web
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${WEB_PORT:-80}:80"
+    networks:
+      - garage-net
+    depends_on:
+      - api
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+
+# ─── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  garage-net:
+    driver: bridge
+    internal: false   # set to true in prod override to block direct internet access

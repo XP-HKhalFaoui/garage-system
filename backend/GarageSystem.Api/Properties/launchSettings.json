@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "GarageSystem.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:16620;http://localhost:16621"
+    }
+  }
+}

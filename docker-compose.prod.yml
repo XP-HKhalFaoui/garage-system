@@ -1,0 +1,46 @@
+# docker-compose.prod.yml — production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+
+  db:
+    ports: []                   # never expose PostgreSQL publicly in prod
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}   # must be set in .env (no default)
+
+  api:
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    deploy:
+      replicas: 2               # scale horizontally behind Nginx
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports: []                   # only Nginx reaches the API — not the host
+
+  web:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/certs:/etc/nginx/certs:ro   # TLS certificates
+
+networks:
+  garage-net:
+    internal: false   # Nginx needs outbound; API/DB cannot reach internet
