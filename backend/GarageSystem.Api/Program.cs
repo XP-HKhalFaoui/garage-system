@@ -1,4 +1,6 @@
 using System.Text;
+using GarageSystem.Api.Extensions;
+using GarageSystem.Api.Hubs;
 using GarageSystem.Api.Middleware;
 using GarageSystem.Infrastructure.Identity;
 using GarageSystem.Infrastructure.Persistence;
@@ -81,8 +83,17 @@ builder.Services.AddAuthentication(opt =>
 
 builder.Services.AddAuthorization();
 
+// ── Maintenance config ────────────────────────────────────────────────────────
+builder.Services.Configure<GarageSystem.Domain.Services.Maintenance.MaintenanceConfig>(
+    builder.Configuration.GetSection("Maintenance"));
+
+// ── Garage config (pour PDF) ──────────────────────────────────────────────────
+builder.Services.Configure<GarageSystem.Api.Services.GarageConfig>(
+    builder.Configuration.GetSection("Garage"));
+
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddApplicationServices();   // OrdreReparationService + IMemoryCache
 
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
@@ -108,8 +119,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ── FluentValidation ──────────────────────────────────────────────────────────
-builder.Services.AddFluentValidationAutoValidation();
 
 var app = builder.Build();
 
@@ -125,17 +134,27 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<OrdresHub>("/hubs/ordres");        // SignalR — Kanban temps réel
 app.MapHealthChecks("/health");
 app.MapHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = [] // TODO: ajouter auth admin
 });
 
-// Seed + run
-if (args.Contains("--seed"))
+// ── Auto-migration au démarrage ───────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-    // await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
+    // Enregistrement des jobs Hangfire récurrents
+    GarageSystem.Api.Extensions.ServiceExtensions.ConfigureHangfireJobs();
+
+    // Seed
+    if (args.Contains("--seed"))
+    {
+        // await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
+    }
 }
 
 app.Run();

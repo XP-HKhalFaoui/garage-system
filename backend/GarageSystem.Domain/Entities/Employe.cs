@@ -20,6 +20,7 @@ public class Employe : SoftDeleteEntity
     public string? NuméroSécuritéSociale { get; set; } // chiffré en DB
     public string? UserId { get; set; }
     public bool IsActif { get; set; } = true;
+    public string NomComplet => $"{Prénom} {Nom}".Trim();
 
     public ICollection<OrdreReparation> OrdresAssignés { get; set; } = new List<OrdreReparation>();
 }

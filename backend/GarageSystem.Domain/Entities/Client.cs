@@ -18,6 +18,11 @@ public class Client : SoftDeleteEntity
     public string? NRC { get; set; }
     public string? NIF { get; set; }
     public bool IsActif { get; set; } = true;
+    public Guid? PortailToken { get; set; }
+
+    public string NomComplet => Type == ClientType.Particulier
+        ? $"{Nom} {Prénom}".Trim()
+        : RaisonSociale ?? Nom;
 
     public ICollection<Vehicule> Vehicules { get; set; } = new List<Vehicule>();
 }

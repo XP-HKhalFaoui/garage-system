@@ -11,7 +11,7 @@ ARG VITE_API_URL
 RUN yarn build
 
 # ─── Stage 2: Nginx runtime ───────────────────────────────────────────────────
-FROM nginx:1.25-alpine AS runner
+FROM nginx:1.25-alpine AS runtime
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 

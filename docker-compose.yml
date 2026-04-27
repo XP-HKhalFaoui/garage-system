@@ -68,6 +68,8 @@ services:
     container_name: garage_web
     restart: unless-stopped
     env_file: .env
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "${WEB_PORT:-80}:80"
     networks:

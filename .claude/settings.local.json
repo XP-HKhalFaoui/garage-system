@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -n '75,95p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/OrdreReparationService.cs)",
+      "Bash(sed -n '170,185p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/OrdreReparationService.cs)",
+      "Bash(sed -n '220,240p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/OrdreReparationService.cs)",
+      "Bash(dotnet test *)",
+      "Bash(sed -n '130,137p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/OffresService.cs)",
+      "Bash(sed -n '183,188p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/PdfService.cs)"
+    ]
+  }
+}

@@ -1,47 +1,80 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { PrivateRoute } from '@/components/auth/PrivateRoute'
-import { LoginPage } from '@/pages/LoginPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { Page403 } from '@/pages/Page403'
+import { PrivateRoute }    from '@/components/auth/PrivateRoute'
+import { AppLayout }       from '@/components/layout/AppLayout'
+import { LoginPage }       from '@/pages/LoginPage'
+import { DashboardPage }   from '@/pages/DashboardPage'
+import { Page403 }         from '@/pages/Page403'
+import { KanbanPage }      from '@/pages/or/KanbanPage'
+import { CreateORPage }    from '@/pages/or/CreateORPage'
+import { ArticlesPage }    from '@/pages/stock/ArticlesPage'
+import { AlertesStockPage } from '@/pages/stock/AlertesStockPage'
+import VehiculeDetailPage  from '@/pages/vehicules/VehiculeDetailPage'
+import VéhiculesPage       from '@/pages/vehicules/VéhiculesPage'
+import ClientsPage         from '@/pages/clients/ClientsPage'
+import { FacturesPage }    from '@/pages/facturation/FacturesPage'
+import { DevisPage }       from '@/pages/facturation/DevisPage'
+import EmployesPage        from '@/pages/rh/EmployesPage'
+import PointagePage        from '@/pages/rh/PointagePage'
+import PaiePage            from '@/pages/rh/PaiePage'
+import CongesPage          from '@/pages/rh/CongesPage'
+import { StatsPage }       from '@/pages/StatsPage'
+import { CaissePage }      from '@/pages/CaissePage'
+import { OffresPage }      from '@/pages/OffresPage'
+import { PortailClientPage } from '@/pages/PortailClientPage'
+import { BonsReceptionPage } from '@/pages/stock/BonsReceptionPage'
+import { ParametresPage }    from '@/pages/ParametresPage'
 
 export default function App() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/403" element={<Page403 />} />
+      <Route path="/login"          element={<LoginPage />} />
+      <Route path="/403"            element={<Page403 />} />
+      <Route path="/portail/:token" element={<PortailClientPage />} />
 
-      {/* Authenticated — all roles */}
+      {/* Authenticated — layout + auth guard */}
       <Route element={<PrivateRoute />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/clients" element={<div style={{padding:'2rem'}}><h1>Clients</h1></div>} />
-        <Route path="/vehicules" element={<div style={{padding:'2rem'}}><h1>Véhicules</h1></div>} />
-        <Route path="/or" element={<div style={{padding:'2rem'}}><h1>Ordres de Réparation</h1></div>} />
-        <Route path="/stock" element={<div style={{padding:'2rem'}}><h1>Stock</h1></div>} />
+        <Route element={<AppLayout />}>
+
+          {/* All roles */}
+          <Route path="/dashboard"      element={<DashboardPage />} />
+          <Route path="/or/kanban"      element={<KanbanPage />} />
+          <Route path="/or/nouveau"     element={<CreateORPage />} />
+          <Route path="/stock/articles"       element={<ArticlesPage />} />
+          <Route path="/stock/bons-reception" element={<BonsReceptionPage />} />
+          <Route path="/stock/alertes"        element={<AlertesStockPage />} />
+          <Route path="/clients"        element={<ClientsPage />} />
+          <Route path="/vehicules"      element={<VéhiculesPage />} />
+          <Route path="/vehicules/:id"  element={<VehiculeDetailPage />} />
+          <Route path="/offres"         element={<OffresPage />} />
+
+          {/* Caissier + Admin */}
+          <Route element={<PrivateRoute allowedRoles={['Caissier']} />}>
+            <Route path="/facturation"          element={<FacturesPage />} />
+            <Route path="/facturation/factures" element={<FacturesPage />} />
+            <Route path="/facturation/devis"    element={<DevisPage />} />
+            <Route path="/caisse"               element={<CaissePage />} />
+          </Route>
+
+          {/* RH + Admin */}
+          <Route element={<PrivateRoute allowedRoles={['RH']} />}>
+            <Route path="/rh/employes" element={<EmployesPage />} />
+            <Route path="/rh/pointage" element={<PointagePage />} />
+            <Route path="/rh/paie"     element={<PaiePage />} />
+            <Route path="/rh/conges"   element={<CongesPage />} />
+          </Route>
+
+          {/* Admin only */}
+          <Route element={<PrivateRoute allowedRoles={['Admin']} />}>
+            <Route path="/stats"      element={<StatsPage />} />
+            <Route path="/parametres" element={<ParametresPage />} />
+          </Route>
+
+        </Route>
       </Route>
 
-      {/* Caissier + Admin */}
-      <Route element={<PrivateRoute allowedRoles={['Caissier']} />}>
-        <Route path="/facturation" element={<div style={{padding:'2rem'}}><h1>Facturation</h1></div>} />
-        <Route path="/caisse" element={<div style={{padding:'2rem'}}><h1>Caisse</h1></div>} />
-      </Route>
-
-      {/* RH + Admin */}
-      <Route element={<PrivateRoute allowedRoles={['RH']} />}>
-        <Route path="/rh" element={<div style={{padding:'2rem'}}><h1>RH</h1></div>} />
-        <Route path="/rh/employes" element={<div style={{padding:'2rem'}}><h1>Employés</h1></div>} />
-        <Route path="/rh/paie" element={<div style={{padding:'2rem'}}><h1>Paie</h1></div>} />
-      </Route>
-
-      {/* Admin only */}
-      <Route element={<PrivateRoute allowedRoles={[]} />}>
-        <Route path="/parametres" element={<div style={{padding:'2rem'}}><h1>Paramètres</h1></div>} />
-        <Route path="/stats" element={<div style={{padding:'2rem'}}><h1>Statistiques</h1></div>} />
-      </Route>
-
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/"  element={<Navigate to="/dashboard" replace />} />
+      <Route path="*"  element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
