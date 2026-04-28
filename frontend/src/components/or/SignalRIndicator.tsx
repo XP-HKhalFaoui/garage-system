@@ -1,20 +1,19 @@
+import { cn } from '@/lib/utils'
+
 interface Props { state: string }
 
-const config: Record<string, { color: string; label: string }> = {
-  connected:    { color: '#16a34a', label: 'Temps réel' },
-  reconnecting: { color: '#d97706', label: 'Reconnexion…' },
-  connecting:   { color: '#d97706', label: 'Connexion…' },
-  disconnected: { color: '#dc2626', label: 'Hors ligne' },
+const CONFIG: Record<string, { dot: string; text: string; label: string }> = {
+  connected:    { dot: 'bg-green-500',  text: 'text-green-600 dark:text-green-400',  label: 'Temps réel' },
+  reconnecting: { dot: 'bg-amber-500',  text: 'text-amber-600 dark:text-amber-400',  label: 'Reconnexion…' },
+  connecting:   { dot: 'bg-amber-500',  text: 'text-amber-600 dark:text-amber-400',  label: 'Connexion…' },
+  disconnected: { dot: 'bg-red-500',    text: 'text-red-600 dark:text-red-400',      label: 'Hors ligne' },
 }
 
 export function SignalRIndicator({ state }: Props) {
-  const { color, label } = config[state] ?? config.disconnected
+  const { dot, text, label } = CONFIG[state] ?? CONFIG.disconnected
   return (
-    <span style={{ fontSize: 12, color, display: 'flex', alignItems: 'center', gap: 4 }}>
-      <span style={{
-        display: 'inline-block', width: 8, height: 8,
-        borderRadius: '50%', background: color,
-      }} />
+    <span className={cn('flex items-center gap-1.5 text-xs font-medium', text)}>
+      <span className={cn('inline-block h-2 w-2 rounded-full', dot)} />
       {label}
     </span>
   )

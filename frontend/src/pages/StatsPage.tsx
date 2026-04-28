@@ -2,145 +2,154 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import api from '@/services/api'
+import api from '@/services/httpClient'
 import type { CaMensuel, StatsTechnicien, StatsArticle } from '@/types/stats'
+import { PageHeader } from '@/components/ui/page-header'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-function fmt(n: number) {
-  return new Intl.NumberFormat('fr-DZ', { minimumFractionDigits: 0 }).format(n) + ' DA'
-}
+const FMT = (n: number) => new Intl.NumberFormat('fr-DZ').format(n) + ' DA'
 
-// ── CA mensuel ────────────────────────────────────────────────────────────────
+// ── CA mensuel (bar) ──────────────────────────────────────────────────────────
 function CaMensuelChart() {
-  const [nbMois, setNbMois] = useState(6)
+  const [nbMois, setNbMois] = useState('6')
   const { data = [], isLoading } = useQuery<CaMensuel[]>({
     queryKey: ['ca-mensuel', nbMois],
     queryFn: () => api.get('/stats/ca-mensuel', { params: { nbMois } }).then(r => r.data),
   })
 
   return (
-    <div style={{ background: 'white', borderRadius: '0.75rem', border: '1px solid #e5e7eb', padding: '1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Chiffre d'affaires mensuel</h2>
-        <select
-          value={nbMois}
-          onChange={e => setNbMois(Number(e.target.value))}
-          style={{ padding: '0.3rem 0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '0.85rem', background: 'white' }}
-        >
-          <option value={3}>3 mois</option>
-          <option value={6}>6 mois</option>
-          <option value={12}>12 mois</option>
-        </select>
-      </div>
-      {isLoading ? (
-        <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>Chargement…</div>
-      ) : (
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-            <XAxis dataKey="mois" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-            <Tooltip formatter={(v: number) => [fmt(v)]} />
-            <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
-            <Bar dataKey="ca"        name="CA TTC"   fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="encaissé"  name="Encaissé" fill="#10b981" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      )}
-    </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-base">Chiffre d'affaires mensuel</CardTitle>
+        <Select value={nbMois} onValueChange={setNbMois}>
+          <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="3">3 mois</SelectItem>
+            <SelectItem value="6">6 mois</SelectItem>
+            <SelectItem value="12">12 mois</SelectItem>
+          </SelectContent>
+        </Select>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? <Skeleton className="h-64 w-full" /> : (
+          <ResponsiveContainer width="100%" height={256}>
+            <BarChart data={data} barCategoryGap="30%">
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
+              <XAxis dataKey="mois" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => [FMT(v)]} contentStyle={{ borderRadius: '0.5rem', fontSize: '0.8rem' }} />
+              <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
+              <Bar dataKey="ca"       name="CA TTC"   fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="encaissé" name="Encaissé" fill="#10b981"              radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
-// ── Évolution CA (line) ───────────────────────────────────────────────────────
+// ── Tendance 12 mois (line) ───────────────────────────────────────────────────
 function CaLineChart() {
-  const { data = [] } = useQuery<CaMensuel[]>({
-    queryKey: ['ca-mensuel', 12],
+  const { data = [], isLoading } = useQuery<CaMensuel[]>({
+    queryKey: ['ca-mensuel', '12'],
     queryFn: () => api.get('/stats/ca-mensuel', { params: { nbMois: 12 } }).then(r => r.data),
   })
 
   return (
-    <div style={{ background: 'white', borderRadius: '0.75rem', border: '1px solid #e5e7eb', padding: '1.25rem' }}>
-      <h2 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700 }}>Tendance 12 mois</h2>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-          <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-          <Tooltip formatter={(v: number) => [fmt(v)]} />
-          <Line type="monotone" dataKey="ca"       name="CA TTC"   stroke="#3b82f6" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="encaissé" name="Encaissé" stroke="#10b981" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <Card>
+      <CardHeader className="pb-2"><CardTitle className="text-base">Tendance 12 mois</CardTitle></CardHeader>
+      <CardContent>
+        {isLoading ? <Skeleton className="h-52 w-full" /> : (
+          <ResponsiveContainer width="100%" height={208}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
+              <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => [FMT(v)]} contentStyle={{ borderRadius: '0.5rem', fontSize: '0.8rem' }} />
+              <Line type="monotone" dataKey="ca"       name="CA TTC"   stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="encaissé" name="Encaissé" stroke="#10b981"              strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
-// ── Techniciens ───────────────────────────────────────────────────────────────
-function TechniciensChart() {
+// ── Performance techniciens ───────────────────────────────────────────────────
+function TechniciensTable() {
   const now = new Date()
-  const [annee, setAnnee] = useState(now.getFullYear())
-  const [mois, setMois] = useState(now.getMonth() + 1)
+  const [annee, setAnnee] = useState(String(now.getFullYear()))
+  const [mois,  setMois]  = useState(String(now.getMonth() + 1))
 
   const { data = [], isLoading } = useQuery<StatsTechnicien[]>({
     queryKey: ['stats-techniciens', annee, mois],
     queryFn: () => api.get('/stats/techniciens', { params: { annee, mois } }).then(r => r.data),
   })
 
-  const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+  const MOIS_LABELS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
 
   return (
-    <div style={{ background: 'white', borderRadius: '0.75rem', border: '1px solid #e5e7eb', padding: '1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Performance techniciens</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <select value={mois} onChange={e => setMois(Number(e.target.value))}
-            style={{ padding: '0.3rem 0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '0.85rem', background: 'white' }}>
-            {MOIS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-          </select>
-          <select value={annee} onChange={e => setAnnee(Number(e.target.value))}
-            style={{ padding: '0.3rem 0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '0.85rem', background: 'white' }}>
-            {[now.getFullYear(), now.getFullYear() - 1].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-base">Performance techniciens</CardTitle>
+        <div className="flex gap-2">
+          <Select value={mois} onValueChange={setMois}>
+            <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {MOIS_LABELS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={annee} onValueChange={setAnnee}>
+            <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[now.getFullYear(), now.getFullYear() - 1].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
-
-      {isLoading ? (
-        <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>Chargement…</div>
-      ) : data.length === 0 ? (
-        <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>Aucune donnée.</div>
-      ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-            <thead>
-              <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                {['Technicien', 'OR réalisés', 'Main d\'œuvre HT', 'Taux occupation'].map(h => (
-                  <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((t, i) => (
-                <tr key={t.nom} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
-                  <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600 }}>{t.nom}</td>
-                  <td style={{ padding: '0.65rem 0.75rem', textAlign: 'center' }}>{t.nbOR}</td>
-                  <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600 }}>{fmt(t.totalMO)}</td>
-                  <td style={{ padding: '0.65rem 0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ flex: 1, height: '6px', background: '#e5e7eb', borderRadius: '9999px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${Math.min(t.tauxOccupation, 100)}%`, background: t.tauxOccupation >= 80 ? '#16a34a' : t.tauxOccupation >= 50 ? '#d97706' : '#dc2626', borderRadius: '9999px' }} />
-                      </div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600, minWidth: '2.5rem', textAlign: 'right' }}>{t.tauxOccupation}%</span>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? <Skeleton className="h-48 w-full" /> : data.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12 text-sm">Aucune donnée.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Technicien</TableHead>
+                <TableHead className="text-center">OR</TableHead>
+                <TableHead className="text-right">Main d'œuvre</TableHead>
+                <TableHead>Taux occupation</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map(t => (
+                <TableRow key={t.nom}>
+                  <TableCell className="font-semibold">{t.nom}</TableCell>
+                  <TableCell className="text-center">{t.nbOR}</TableCell>
+                  <TableCell className="text-right font-medium">{FMT(t.totalMO)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={Math.min(t.tauxOccupation, 100)}
+                        className="h-1.5 flex-1"
+                      />
+                      <span className="text-xs font-semibold w-10 text-right">{t.tauxOccupation}%</span>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -152,52 +161,49 @@ function StockRotationTable() {
   })
 
   return (
-    <div style={{ background: 'white', borderRadius: '0.75rem', border: '1px solid #e5e7eb', padding: '1.25rem' }}>
-      <h2 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700 }}>Top articles (rotation stock)</h2>
-      {isLoading ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Chargement…</div>
-      ) : data.length === 0 ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Aucune donnée.</div>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-          <thead>
-            <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-              {['Réf.', 'Désignation', 'Mouvements', 'Valeur sortie HT'].map(h => (
-                <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+    <Card>
+      <CardHeader className="pb-2"><CardTitle className="text-base">Top articles (rotation stock)</CardTitle></CardHeader>
+      <CardContent>
+        {isLoading ? <Skeleton className="h-48 w-full" /> : data.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12 text-sm">Aucune donnée.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Réf.</TableHead>
+                <TableHead>Désignation</TableHead>
+                <TableHead className="text-center">Mouvements</TableHead>
+                <TableHead className="text-right">Valeur sortie HT</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map(a => (
+                <TableRow key={a.référence}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{a.référence}</TableCell>
+                  <TableCell className="font-medium">{a.désignation}</TableCell>
+                  <TableCell className="text-center">{a.nbMouvements}</TableCell>
+                  <TableCell className="text-right font-semibold">{FMT(a.valeurSortie)}</TableCell>
+                </TableRow>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((a, i) => (
-              <tr key={a.référence} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
-                <td style={{ padding: '0.65rem 0.75rem', fontFamily: 'monospace', color: '#6b7280', fontSize: '0.8rem' }}>{a.référence}</td>
-                <td style={{ padding: '0.65rem 0.75rem', fontWeight: 500 }}>{a.désignation}</td>
-                <td style={{ padding: '0.65rem 0.75rem', textAlign: 'center' }}>{a.nbMouvements}</td>
-                <td style={{ padding: '0.65rem 0.75rem', fontWeight: 600 }}>{fmt(a.valeurSortie)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function StatsPage() {
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: '#111827' }}>
-        Statistiques
-      </h1>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+    <div className="space-y-6">
+      <PageHeader title="Statistiques" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <CaMensuelChart />
         <CaLineChart />
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <TechniciensChart />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TechniciensTable />
         <StockRotationTable />
       </div>
     </div>

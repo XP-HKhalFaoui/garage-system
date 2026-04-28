@@ -6,7 +6,23 @@
       "Bash(sed -n '220,240p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/OrdreReparationService.cs)",
       "Bash(dotnet test *)",
       "Bash(sed -n '130,137p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/OffresService.cs)",
-      "Bash(sed -n '183,188p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/PdfService.cs)"
+      "Bash(sed -n '183,188p' D:/Projects/HubLinks-Software/alteqiaGarage/garage-system/backend/GarageSystem.Api/Services/PdfService.cs)",
+      "Bash(bash dev.sh)",
+      "Bash(xargs grep *)",
+      "Bash(docker compose *)",
+      "Bash(dotnet restore *)",
+      "Bash(dotnet ef *)",
+      "Bash(dotnet nuget *)",
+      "Bash(dotnet add *)",
+      "Bash(git -C \"D:\\\\Projects\\\\HubLinks-Software\\\\alteqiaGarage\\\\garage-system\" log --oneline -10)",
+      "Bash(yarn add *)",
+      "Bash(npx shadcn@latest add button card badge input label select dialog sheet table tabs --yes)",
+      "Bash(npx shadcn@latest add avatar dropdown-menu separator skeleton tooltip alert-dialog progress form --yes)",
+      "Bash(yarn type-check *)",
+      "Bash(npx tsc *)",
+      "Bash(dotnet build *)",
+      "Bash(npx shadcn@latest add switch --yes)",
+      "Bash(npx shadcn@latest add textarea --yes)"
     ]
   }
 }

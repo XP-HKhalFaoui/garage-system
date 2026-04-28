@@ -1,4 +1,4 @@
-import api from './api'
+import api from './httpClient'
 import type {
   EmployeResponse, CreateEmployeDto, PointageResponse,
   PointageMensuel, BulletinPaie, CongeResponse, SoldeConge, PrésentAujourdHui

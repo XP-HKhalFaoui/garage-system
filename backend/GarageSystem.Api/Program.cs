@@ -93,6 +93,7 @@ builder.Services.Configure<GarageSystem.Api.Services.GarageConfig>(
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<GarageSystem.Infrastructure.Persistence.DatabaseSeeder>();
 builder.Services.AddApplicationServices();   // OrdreReparationService + IMemoryCache
 
 // ── SignalR ───────────────────────────────────────────────────────────────────
@@ -150,11 +151,10 @@ using (var scope = app.Services.CreateScope())
     // Enregistrement des jobs Hangfire récurrents
     GarageSystem.Api.Extensions.ServiceExtensions.ConfigureHangfireJobs();
 
-    // Seed
-    if (args.Contains("--seed"))
-    {
-        // await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
-    }
+    // Seed rôles + utilisateur admin par défaut
+    await scope.ServiceProvider
+        .GetRequiredService<GarageSystem.Infrastructure.Persistence.DatabaseSeeder>()
+        .SeedAsync();
 }
 
 app.Run();

@@ -1,30 +1,44 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { FileText, Send, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { devisService } from '@/services/billingService'
 import type { DevisResponse, DevisStatut } from '@/types/billing'
+import { PageHeader } from '@/components/ui/page-header'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const STATUT_CONFIG: Record<DevisStatut, { label: string; color: string; bg: string }> = {
-  Brouillon:     { label: 'Brouillon',       color: '#6b7280', bg: '#f9fafb' },
-  Validé:        { label: 'Validé',          color: '#2563eb', bg: '#eff6ff' },
-  EnvoyéClient:  { label: 'Envoyé client',   color: '#7c3aed', bg: '#f5f3ff' },
-  Accepté:       { label: 'Accepté',         color: '#16a34a', bg: '#f0fdf4' },
-  Refusé:        { label: 'Refusé',          color: '#dc2626', bg: '#fef2f2' },
-  Expiré:        { label: 'Expiré',          color: '#d97706', bg: '#fffbeb' },
+const FMT = (n: number) => new Intl.NumberFormat('fr-DZ', { minimumFractionDigits: 2 }).format(n) + ' DA'
+
+const STATUT_VARIANT: Record<DevisStatut, string> = {
+  Brouillon:    'bg-muted text-muted-foreground',
+  Validé:       'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  EnvoyéClient: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  Accepté:      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  Refusé:       'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  Expiré:       'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 }
 
-function fmt(n: number) {
-  return new Intl.NumberFormat('fr-DZ', { minimumFractionDigits: 2 }).format(n) + ' DA'
+const STATUT_LABEL: Record<DevisStatut, string> = {
+  Brouillon: 'Brouillon', Validé: 'Validé', EnvoyéClient: 'Envoyé client',
+  Accepté: 'Accepté', Refusé: 'Refusé', Expiré: 'Expiré',
 }
 
-// ── Modal détail / actions ────────────────────────────────────────────────────
-function DevisDetailModal({
-  devis,
-  onClose,
-}: {
-  devis: DevisResponse
-  onClose: () => void
-}) {
+const FILTER_STATUTS: { label: string; value: DevisStatut | '' }[] = [
+  { label: 'Tous', value: '' },
+  { label: 'Brouillons', value: 'Brouillon' },
+  { label: 'Validés', value: 'Validé' },
+  { label: 'Envoyés', value: 'EnvoyéClient' },
+  { label: 'Acceptés', value: 'Accepté' },
+]
+
+// ── Modal détail ──────────────────────────────────────────────────────────────
+function DevisDetailModal({ devis, onClose }: { devis: DevisResponse; onClose: () => void }) {
   const qc = useQueryClient()
   const [refusMotif, setRefusMotif] = useState('')
   const [showRefusForm, setShowRefusForm] = useState(false)
@@ -34,183 +48,114 @@ function DevisDetailModal({
   const mutAccepter = useMutation({ mutationFn: () => devisService.accepter(devis.id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['devis'] }); onClose() } })
   const mutRefuser  = useMutation({ mutationFn: () => devisService.refuser(devis.id, refusMotif), onSuccess: () => { qc.invalidateQueries({ queryKey: ['devis'] }); onClose() } })
 
-  const cfg = STATUT_CONFIG[devis.statut]
   const isExpired = new Date(devis.dateExpiration) < new Date()
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-    }}>
-      <div style={{
-        background: 'white', borderRadius: '0.75rem', padding: '1.5rem',
-        width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, fontFamily: 'monospace' }}>{devis.numéro}</h2>
-            <div style={{ marginTop: '0.3rem' }}>
-              <span style={{
-                background: cfg.bg, color: cfg.color,
-                padding: '0.2rem 0.6rem', borderRadius: '9999px',
-                fontSize: '0.75rem', fontWeight: 600,
-              }}>
-                {cfg.label}
-              </span>
-            </div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#6b7280' }}>✕</button>
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="font-mono">{devis.numéro}</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className={cn('text-xs', STATUT_VARIANT[devis.statut])}>
+            {STATUT_LABEL[devis.statut]}
+          </Badge>
         </div>
 
-        {/* Infos */}
-        <div style={{
-          background: '#f9fafb', borderRadius: '0.5rem', padding: '0.75rem',
-          marginBottom: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem',
-          fontSize: '0.85rem',
-        }}>
-          <div><span style={{ color: '#6b7280' }}>Client : </span><strong>{devis.clientNom}</strong></div>
-          <div><span style={{ color: '#6b7280' }}>Créé le : </span>{new Date(devis.dateCreation).toLocaleDateString('fr-DZ')}</div>
+        <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/50 p-3 text-sm">
+          <div><span className="text-muted-foreground">Client : </span><strong>{devis.clientNom}</strong></div>
+          <div><span className="text-muted-foreground">Créé le : </span>{new Date(devis.dateCreation).toLocaleDateString('fr-DZ')}</div>
           <div>
-            <span style={{ color: '#6b7280' }}>Expire le : </span>
-            <span style={{ color: isExpired ? '#dc2626' : '#374151', fontWeight: isExpired ? 600 : 400 }}>
+            <span className="text-muted-foreground">Expire le : </span>
+            <span className={cn(isExpired && 'font-semibold text-destructive')}>
               {new Date(devis.dateExpiration).toLocaleDateString('fr-DZ')}
-              {isExpired && ' ⚠️'}
+              {isExpired && ' ⚠'}
             </span>
           </div>
           {devis.dateEnvoi && (
-            <div><span style={{ color: '#6b7280' }}>Envoyé le : </span>{new Date(devis.dateEnvoi).toLocaleDateString('fr-DZ')}</div>
+            <div><span className="text-muted-foreground">Envoyé le : </span>{new Date(devis.dateEnvoi).toLocaleDateString('fr-DZ')}</div>
           )}
         </div>
 
-        {/* Lignes */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', marginBottom: '1rem' }}>
-          <thead>
-            <tr style={{ background: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}>
-              {['Description', 'Qté', 'P.U. HT', 'TVA', 'Total TTC'].map(h => (
-                <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: '0.78rem' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Qté</TableHead>
+              <TableHead className="text-right">P.U. HT</TableHead>
+              <TableHead className="text-right">TVA</TableHead>
+              <TableHead className="text-right">Total TTC</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {devis.lignes.map(l => (
-              <tr key={l.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                <td style={{ padding: '0.5rem 0.75rem' }}>{l.description}</td>
-                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>{l.quantité}</td>
-                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>{fmt(l.prixUnitaireHT)}</td>
-                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>{l.tauxTVA}%</td>
-                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right', fontWeight: 600 }}>{fmt(l.totalTTC)}</td>
-              </tr>
+              <TableRow key={l.id}>
+                <TableCell>{l.description}</TableCell>
+                <TableCell className="text-right">{l.quantité}</TableCell>
+                <TableCell className="text-right">{FMT(l.prixUnitaireHT)}</TableCell>
+                <TableCell className="text-right">{l.tauxTVA}%</TableCell>
+                <TableCell className="text-right font-semibold">{FMT(l.totalTTC)}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
-        {/* Totaux */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-          gap: '0.25rem', fontSize: '0.875rem', marginBottom: '1.25rem',
-        }}>
-          <div style={{ color: '#6b7280' }}>Sous-total HT : {fmt(devis.sousTotalHT)}</div>
-          <div style={{ color: '#6b7280' }}>TVA : {fmt(devis.montantTVA)}</div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', borderTop: '1px solid #e5e7eb', paddingTop: '0.4rem' }}>
-            Total TTC : {fmt(devis.totalTTC)}
-          </div>
+        <div className="flex flex-col items-end gap-1 text-sm">
+          <p className="text-muted-foreground">Sous-total HT : {FMT(devis.sousTotalHT)}</p>
+          <p className="text-muted-foreground">TVA : {FMT(devis.montantTVA)}</p>
+          <p className="text-lg font-bold border-t pt-1">Total TTC : {FMT(devis.totalTTC)}</p>
         </div>
 
-        {/* Formulaire refus */}
         {showRefusForm && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.4rem' }}>
-              Motif du refus
-            </label>
-            <textarea
-              value={refusMotif}
-              onChange={e => setRefusMotif(e.target.value)}
-              rows={3}
-              style={{
-                width: '100%', padding: '0.5rem 0.75rem',
-                border: '1px solid #d1d5db', borderRadius: '0.375rem',
-                fontSize: '0.875rem', boxSizing: 'border-box', resize: 'vertical',
-              }}
-            />
+          <div className="space-y-1.5">
+            <Label>Motif du refus</Label>
+            <Textarea value={refusMotif} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRefusMotif(e.target.value)} rows={3} />
           </div>
         )}
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {/* PDF */}
-          <a
-            href={devisService.getPdfUrl(devis.id)}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              padding: '0.5rem 1rem', borderRadius: '0.375rem',
-              border: '1px solid #d1d5db', background: 'white',
-              textDecoration: 'none', color: '#374151', fontSize: '0.875rem',
-              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-            }}
-          >
-            📄 PDF
+        <div className="flex gap-2 flex-wrap justify-end pt-1">
+          <a href={devisService.getPdfUrl(devis.id)} target="_blank" rel="noreferrer">
+            <Button variant="outline" size="sm"><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
           </a>
 
           {devis.statut === 'Brouillon' && (
-            <button
-              onClick={() => mutValider.mutate()}
-              disabled={mutValider.isPending}
-              style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', background: '#2563eb', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, opacity: mutValider.isPending ? 0.7 : 1 }}
-            >
-              ✅ Valider
-            </button>
+            <Button size="sm" onClick={() => mutValider.mutate()} disabled={mutValider.isPending}>
+              {mutValider.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              Valider
+            </Button>
           )}
 
           {devis.statut === 'Validé' && (
-            <button
-              onClick={() => mutEnvoyer.mutate()}
-              disabled={mutEnvoyer.isPending}
-              style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', background: '#7c3aed', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, opacity: mutEnvoyer.isPending ? 0.7 : 1 }}
-            >
-              📤 Envoyer au client
-            </button>
+            <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => mutEnvoyer.mutate()} disabled={mutEnvoyer.isPending}>
+              {mutEnvoyer.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              <Send className="h-3.5 w-3.5 mr-1.5" />
+              Envoyer au client
+            </Button>
           )}
 
           {devis.statut === 'EnvoyéClient' && (
             <>
-              <button
-                onClick={() => mutAccepter.mutate()}
-                disabled={mutAccepter.isPending}
-                style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', background: '#16a34a', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
-              >
-                👍 Accepté
-              </button>
+              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => mutAccepter.mutate()} disabled={mutAccepter.isPending}>
+                <CheckCircle className="h-3.5 w-3.5 mr-1.5" />Accepté
+              </Button>
               {!showRefusForm ? (
-                <button
-                  onClick={() => setShowRefusForm(true)}
-                  style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', background: '#dc2626', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
-                >
-                  👎 Refusé
-                </button>
+                <Button size="sm" variant="destructive" onClick={() => setShowRefusForm(true)}>
+                  <XCircle className="h-3.5 w-3.5 mr-1.5" />Refusé
+                </Button>
               ) : (
-                <button
-                  onClick={() => mutRefuser.mutate()}
-                  disabled={mutRefuser.isPending || !refusMotif.trim()}
-                  style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', background: '#dc2626', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, opacity: mutRefuser.isPending || !refusMotif.trim() ? 0.7 : 1 }}
-                >
-                  {mutRefuser.isPending ? 'Enregistrement…' : 'Confirmer refus'}
-                </button>
+                <Button size="sm" variant="destructive" onClick={() => mutRefuser.mutate()} disabled={mutRefuser.isPending || !refusMotif.trim()}>
+                  {mutRefuser.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+                  Confirmer refus
+                </Button>
               )}
             </>
           )}
 
-          <button
-            onClick={onClose}
-            style={{ padding: '0.5rem 1rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer', fontSize: '0.875rem' }}
-          >
-            Fermer
-          </button>
+          <Button variant="outline" size="sm" onClick={onClose}>Fermer</Button>
         </div>
       </div>
-    </div>
+    </DialogContent>
   )
 }
 
@@ -223,180 +168,94 @@ export function DevisPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['devis', statutFilter, page],
-    queryFn: () =>
-      devisService.getList({
-        statut: statutFilter || undefined,
-        page,
-        pageSize,
-      }),
+    queryFn: () => devisService.getList({ statut: statutFilter || undefined, page, pageSize }),
   })
 
   const items: DevisResponse[] = Array.isArray(data) ? data : []
 
-  const STATS = [
-    { label: 'Brouillons',    statut: 'Brouillon'    as DevisStatut, color: '#6b7280' },
-    { label: 'Validés',       statut: 'Validé'       as DevisStatut, color: '#2563eb' },
-    { label: 'Envoyés',       statut: 'EnvoyéClient' as DevisStatut, color: '#7c3aed' },
-    { label: 'Acceptés',      statut: 'Accepté'      as DevisStatut, color: '#16a34a' },
-  ]
-
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', color: '#111827' }}>
-        Devis
-      </h1>
+    <div className="space-y-6">
+      <PageHeader title="Devis" />
 
-      {/* Filtres rapides */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <button
-          onClick={() => { setStatutFilter(''); setPage(1) }}
-          style={{
-            padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.85rem',
-            fontWeight: 500, cursor: 'pointer', border: '2px solid',
-            borderColor: statutFilter === '' ? '#2563eb' : '#e5e7eb',
-            background: statutFilter === '' ? '#eff6ff' : 'white',
-            color: statutFilter === '' ? '#2563eb' : '#374151',
-          }}
-        >
-          Tous
-        </button>
-        {STATS.map(({ label, statut, color }) => (
+      <div className="flex gap-2 flex-wrap">
+        {FILTER_STATUTS.map(({ label, value }) => (
           <button
-            key={statut}
-            onClick={() => { setStatutFilter(statut); setPage(1) }}
-            style={{
-              padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.85rem',
-              fontWeight: 500, cursor: 'pointer', border: '2px solid',
-              borderColor: statutFilter === statut ? color : '#e5e7eb',
-              background: statutFilter === statut ? STATUT_CONFIG[statut].bg : 'white',
-              color: statutFilter === statut ? color : '#374151',
-            }}
+            key={label}
+            onClick={() => { setStatutFilter(value); setPage(1) }}
+            className={cn(
+              'px-4 py-1.5 rounded-full text-sm font-medium border-2 transition-colors',
+              statutFilter === value
+                ? 'border-primary bg-primary/5 text-primary'
+                : 'border-border bg-background text-foreground hover:bg-muted',
+            )}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {/* Tableau */}
-      <div style={{ background: 'white', borderRadius: '0.75rem', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-          <thead>
-            <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-              {['N°', 'Client', 'Créé le', 'Expire le', 'Total TTC', 'Statut', 'Actions'].map(h => (
-                <th key={h} style={{
-                  padding: '0.75rem 1rem', textAlign: 'left',
-                  fontSize: '0.78rem', fontWeight: 600, color: '#374151',
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
-                }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Chargement…</td>
-              </tr>
-            )}
-            {!isLoading && items.length === 0 && (
-              <tr>
-                <td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
-                  Aucun devis trouvé.
-                </td>
-              </tr>
-            )}
-            {items.map((d, idx) => {
-              const cfg = STATUT_CONFIG[d.statut]
-              const expired = new Date(d.dateExpiration) < new Date()
+      <div className="rounded-md border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>N°</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Créé le</TableHead>
+              <TableHead>Expire le</TableHead>
+              <TableHead className="text-right">Total TTC</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+                </TableRow>
+              ))
+            ) : items.length === 0 ? (
+              <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Aucun devis trouvé.</TableCell></TableRow>
+            ) : items.map(d => {
+              const expired = new Date(d.dateExpiration) < new Date() && d.statut !== 'Accepté'
               return (
-                <tr key={d.id} style={{
-                  borderBottom: '1px solid #f3f4f6',
-                  background: idx % 2 === 0 ? 'white' : '#fafafa',
-                  cursor: 'pointer',
-                }}
-                  onClick={() => setSelected(d)}
-                >
-                  <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontWeight: 600, color: '#2563eb' }}>{d.numéro}</td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 500 }}>{d.clientNom}</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#374151' }}>
-                    {new Date(d.dateCreation).toLocaleDateString('fr-DZ')}
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem', color: expired && d.statut !== 'Accepté' ? '#dc2626' : '#374151', fontWeight: expired && d.statut !== 'Accepté' ? 600 : 400 }}>
+                <TableRow key={d.id} className="cursor-pointer" onClick={() => setSelected(d)}>
+                  <TableCell className="font-mono font-semibold text-primary">{d.numéro}</TableCell>
+                  <TableCell className="font-medium">{d.clientNom}</TableCell>
+                  <TableCell className="text-muted-foreground">{new Date(d.dateCreation).toLocaleDateString('fr-DZ')}</TableCell>
+                  <TableCell className={cn(expired && 'font-semibold text-destructive')}>
                     {new Date(d.dateExpiration).toLocaleDateString('fr-DZ')}
-                    {expired && d.statut !== 'Accepté' && ' ⚠️'}
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, textAlign: 'right' }}>{fmt(d.totalTTC)}</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <span style={{
-                      background: cfg.bg, color: cfg.color,
-                      padding: '0.2rem 0.6rem', borderRadius: '9999px',
-                      fontSize: '0.75rem', fontWeight: 600,
-                    }}>
-                      {cfg.label}
-                    </span>
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem' }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                      <button
-                        onClick={() => setSelected(d)}
-                        title="Voir le détail"
-                        style={{
-                          padding: '0.3rem 0.6rem', borderRadius: '0.25rem',
-                          background: '#f3f4f6', border: 'none', cursor: 'pointer', fontSize: '0.8rem',
-                        }}
-                      >
-                        🔍
-                      </button>
-                      <a
-                        href={devisService.getPdfUrl(d.id)}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Télécharger PDF"
-                        style={{
-                          padding: '0.3rem 0.6rem', borderRadius: '0.25rem',
-                          background: '#f3f4f6', color: '#374151', textDecoration: 'none', fontSize: '0.8rem',
-                        }}
-                      >
-                        📄
-                      </a>
-                    </div>
-                  </td>
-                </tr>
+                    {expired && <span className="ml-1 text-xs">⚠</span>}
+                  </TableCell>
+                  <TableCell className="text-right font-bold">{FMT(d.totalTTC)}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={cn('text-xs', STATUT_VARIANT[d.statut])}>
+                      {STATUT_LABEL[d.statut]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell onClick={e => e.stopPropagation()}>
+                    <a href={devisService.getPdfUrl(d.id)} target="_blank" rel="noreferrer">
+                      <Button variant="ghost" size="icon" className="h-7 w-7"><FileText className="h-3.5 w-3.5" /></Button>
+                    </a>
+                  </TableCell>
+                </TableRow>
               )
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
-        {/* Pagination */}
         {items.length === pageSize && (
-          <div style={{
-            padding: '0.75rem 1rem', borderTop: '1px solid #f3f4f6',
-            display: 'flex', justifyContent: 'flex-end', gap: '0.5rem',
-            fontSize: '0.85rem',
-          }}>
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
-              style={{ padding: '0.3rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', background: 'white', cursor: 'pointer', opacity: page === 1 ? 0.5 : 1 }}
-            >
-              ←
-            </button>
-            <span style={{ padding: '0.3rem 0.5rem' }}>Page {page}</span>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              style={{ padding: '0.3rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', background: 'white', cursor: 'pointer' }}
-            >
-              →
-            </button>
+          <div className="flex items-center justify-end gap-2 px-4 py-3 border-t text-sm text-muted-foreground">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>←</Button>
+            <span className="px-2">Page {page}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)}>→</Button>
           </div>
         )}
       </div>
 
-      {/* Modal détail */}
-      {selected && (
-        <DevisDetailModal devis={selected} onClose={() => setSelected(null)} />
-      )}
+      <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null) }}>
+        {selected && <DevisDetailModal devis={selected} onClose={() => setSelected(null)} />}
+      </Dialog>
     </div>
   )
 }

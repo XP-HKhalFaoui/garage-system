@@ -1,16 +1,19 @@
-# ─── Stage 1: build Vite app ──────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+# ─── Stage 1: install dependencies ───────────────────────────────────────────
+FROM node:20-alpine AS deps
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# ─── Stage 2: build Vite app ──────────────────────────────────────────────────
+FROM deps AS builder
 
 COPY . .
 
 ARG VITE_API_URL
-RUN yarn build
+RUN npm run build
 
-# ─── Stage 2: Nginx runtime ───────────────────────────────────────────────────
+# ─── Stage 3: Nginx runtime ───────────────────────────────────────────────────
 FROM nginx:1.25-alpine AS runtime
 
 COPY --from=builder /app/dist /usr/share/nginx/html

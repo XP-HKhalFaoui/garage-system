@@ -3,7 +3,7 @@
 
 # ── Docker ────────────────────────────────────────────────────────────────────
 dev:
-	./dev.sh
+	bash dev.sh
 
 prod:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -19,10 +19,10 @@ clean:
 
 # ── EF Core Migrations ────────────────────────────────────────────────────────
 migrate:
-	cd backend && dotnet ef migrations add $(name) --project GarageSystem.Infrastructure --startup-project GarageSystem.Api
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api sh -c 'export PATH="$$PATH:/root/.dotnet/tools" && dotnet ef migrations add $(name) --project GarageSystem.Infrastructure --startup-project GarageSystem.Api'
 
 db-update:
-	cd backend && dotnet ef database update --project GarageSystem.Infrastructure --startup-project GarageSystem.Api
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api sh -c 'export PATH="$$PATH:/root/.dotnet/tools" && dotnet ef database update --project GarageSystem.Infrastructure --startup-project GarageSystem.Api'
 
 db-seed:
 	cd backend && dotnet run --project GarageSystem.Api -- --seed

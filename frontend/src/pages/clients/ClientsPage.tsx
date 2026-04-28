@@ -3,22 +3,33 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { clientService } from '../../services/vehiculeService'
 import { useNavigate } from 'react-router-dom'
+import { Search, PlusCircle, Phone, Pencil, Trash2 } from 'lucide-react'
+import { clientService } from '../../services/vehiculeService'
 import type { ClientResponse, CreateClientDto, ClientType } from '../../types/crm'
+import { PageHeader } from '@/components/ui/page-header'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
-const WILAYAS = ['Alger', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna', 'Sétif', 'Tizi Ouzou', 'Béjaïa', 'Médéa']
+const WILAYAS = ['Alger','Oran','Constantine','Annaba','Blida','Batna','Sétif','Tizi Ouzou','Béjaïa','Médéa']
 
 const schema = z.object({
   type: z.enum(['Particulier', 'Entreprise']),
-  nom: z.string().min(1),
+  nom: z.string().min(1, 'Requis'),
   prénom: z.string().optional(),
   raisonSociale: z.string().optional(),
-  téléphone: z.string().min(1),
+  téléphone: z.string().min(1, 'Requis'),
   téléphoneAlt: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  adresse: z.string().min(1),
-  wilaya: z.string().min(1),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  adresse: z.string().min(1, 'Requis'),
+  wilaya: z.string().min(1, 'Requis'),
   nif: z.string().optional(),
   nrc: z.string().optional(),
 })
@@ -42,31 +53,29 @@ export default function ClientsPage() {
     queryFn: () => clientService.getList({ search: search || undefined, page, pageSize: 20 }),
   })
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { type: 'Particulier', wilaya: 'Alger' },
   })
-  const typeClient = watch('type')
+  const typeClient = form.watch('type')
 
   const createMut = useMutation({
     mutationFn: (dto: CreateClientDto) => clientService.create(dto),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); closeModal() },
   })
-
   const updateMut = useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: Partial<CreateClientDto> }) => clientService.update(id, dto),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['clients'] }); closeModal() },
   })
-
   const deleteMut = useMutation({
     mutationFn: clientService.delete,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
   })
 
-  function openCreate() { setEditing(null); reset({ type: 'Particulier', wilaya: 'Alger' }); setShowModal(true) }
+  function openCreate() { setEditing(null); form.reset({ type: 'Particulier', wilaya: 'Alger' }); setShowModal(true) }
   function openEdit(c: ClientResponse) {
     setEditing(c)
-    reset({
+    form.reset({
       type: c.type as 'Particulier' | 'Entreprise',
       nom: c.nom, prénom: c.prénom ?? '',
       raisonSociale: c.raisonSociale ?? '',
@@ -75,170 +84,219 @@ export default function ClientsPage() {
     })
     setShowModal(true)
   }
-  function closeModal() { setShowModal(false); setEditing(null); reset({}) }
+  function closeModal() { setShowModal(false); setEditing(null); form.reset({}) }
 
   function onSubmit(data: FormData) {
-    const dto: CreateClientDto = {
-      ...data,
-      type: data.type as ClientType,
-      email: data.email || undefined,
-    }
+    const dto: CreateClientDto = { ...data, type: data.type as ClientType, email: data.email || undefined }
     if (editing) updateMut.mutate({ id: editing.id, dto })
     else createMut.mutate(dto)
   }
 
   const clients = data?.items ?? []
+  const total   = data?.total ?? 0
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Clients</h1>
-        <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          + Nouveau client
-        </button>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Clients"
+        subtitle={`${total} client${total !== 1 ? 's' : ''}`}
+        actions={
+          <Button size="sm" onClick={openCreate}>
+            <PlusCircle className="h-4 w-4 mr-1.5" />
+            Nouveau client
+          </Button>
+        }
+      />
 
-      <div className="flex gap-3">
-        <input
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }}
-          placeholder="Rechercher par nom, téléphone..."
-          className="border rounded-lg px-3 py-2 text-sm flex-1 max-w-sm"
+          placeholder="Nom, téléphone, immatriculation…"
+          className="pl-8"
         />
-        <span className="ml-auto text-sm text-gray-500 self-center">{data?.total ?? 0} client(s)</span>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-400">Chargement...</div>
-      ) : (
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                {['Client', 'Type', 'Téléphone', 'Wilaya', 'Véhicules', 'OR', 'CA Total', 'Actions'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {clients.map(c => (
-                <tr key={c.id} className="border-b hover:bg-gray-50 cursor-pointer"
-                  onClick={() => navigate(`/clients/${c.id}`)}>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{clientDisplayName(c)}</div>
-                    {c.email && <div className="text-xs text-gray-400">{c.email}</div>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${c.type === 'Entreprise' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {c.type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{c.téléphone}</td>
-                  <td className="px-4 py-3 text-gray-500">{c.wilaya}</td>
-                  <td className="px-4 py-3 text-center font-medium">{c.nbVéhicules}</td>
-                  <td className="px-4 py-3 text-center">{c.nbOR}</td>
-                  <td className="px-4 py-3 font-medium text-green-700">
-                    {c.caTotalHT.toLocaleString('fr-DZ')} DA
-                  </td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <div className="flex gap-2">
-                      <button onClick={() => openEdit(c)} className="text-blue-600 hover:text-blue-800 text-xs">Modifier</button>
-                      <button onClick={() => confirm('Supprimer ce client ?') && deleteMut.mutate(c.id)}
-                        className="text-red-500 hover:text-red-700 text-xs">Supprimer</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {clients.length === 0 && (
-            <div className="text-center py-12 text-gray-400">Aucun client trouvé</div>
-          )}
-        </div>
-      )}
-
-      {(data?.total ?? 0) > 20 && (
-        <div className="flex justify-center gap-2">
-          <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
-            className="px-3 py-1 border rounded disabled:opacity-40">‹</button>
-          <span className="px-3 py-1 text-sm text-gray-600">Page {page}</span>
-          <button disabled={clients.length < 20} onClick={() => setPage(p => p + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-40">›</button>
-        </div>
-      )}
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold">{editing ? 'Modifier client' : 'Nouveau client'}</h2>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <select {...register('type')} className="w-full border rounded-lg px-3 py-2">
-                    <option value="Particulier">Particulier</option>
-                    <option value="Entreprise">Entreprise</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nom *</label>
-                  <input {...register('nom')} className="w-full border rounded-lg px-3 py-2" />
-                  {errors.nom && <p className="text-red-500 text-xs mt-1">Requis</p>}
-                </div>
-                {typeClient === 'Particulier' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Prénom</label>
-                    <input {...register('prénom')} className="w-full border rounded-lg px-3 py-2" />
+      {/* Table */}
+      <div className="rounded-md border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Client</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Téléphone</TableHead>
+              <TableHead>Wilaya</TableHead>
+              <TableHead className="text-center">Véhicules</TableHead>
+              <TableHead className="text-center">OR</TableHead>
+              <TableHead className="text-right">CA Total</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 8 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : clients.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">Aucun client trouvé</TableCell>
+              </TableRow>
+            ) : clients.map(c => (
+              <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clients/${c.id}`)}>
+                <TableCell>
+                  <p className="font-medium">{clientDisplayName(c)}</p>
+                  {c.email && <p className="text-xs text-muted-foreground">{c.email}</p>}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className={c.type === 'Entreprise' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}>
+                    {c.type}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{c.téléphone}</TableCell>
+                <TableCell className="text-muted-foreground">{c.wilaya}</TableCell>
+                <TableCell className="text-center font-medium">{c.nbVéhicules}</TableCell>
+                <TableCell className="text-center">{c.nbOR}</TableCell>
+                <TableCell className="text-right font-medium text-green-700 dark:text-green-400">
+                  {c.caTotalHT.toLocaleString('fr-DZ')} DA
+                </TableCell>
+                <TableCell onClick={e => e.stopPropagation()}>
+                  <div className="flex gap-1 justify-end">
+                    <a href={`tel:${c.téléphone}`} onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7"><Phone className="h-3.5 w-3.5" /></Button>
+                    </a>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <ConfirmDialog
+                      trigger={<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>}
+                      title="Supprimer ce client"
+                      description="Cette action est irréversible. Le client sera supprimé (soft delete)."
+                      variant="destructive"
+                      confirmLabel="Supprimer"
+                      onConfirm={() => deleteMut.mutateAsync(c.id)}
+                    />
                   </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {total > 20 && (
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</Button>
+          <span className="px-3 py-1 text-sm text-muted-foreground">Page {page}</span>
+          <Button variant="outline" size="sm" disabled={clients.length < 20} onClick={() => setPage(p => p + 1)}>›</Button>
+        </div>
+      )}
+
+      {/* Modal création/édition */}
+      <Dialog open={showModal} onOpenChange={open => { if (!open) closeModal() }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Modifier le client' : 'Nouveau client'}</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="type" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="Particulier">Particulier</SelectItem>
+                        <SelectItem value="Entreprise">Entreprise</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="nom" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom *</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                {typeClient === 'Particulier' && (
+                  <FormField control={form.control} name="prénom" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prénom</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                    </FormItem>
+                  )} />
                 )}
-                {typeClient === 'Entreprise' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Raison sociale</label>
-                      <input {...register('raisonSociale')} className="w-full border rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">NIF</label>
-                      <input {...register('nif')} className="w-full border rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">NRC</label>
-                      <input {...register('nrc')} className="w-full border rounded-lg px-3 py-2" />
-                    </div>
-                  </>
-                )}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Téléphone *</label>
-                  <input {...register('téléphone')} className="w-full border rounded-lg px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <input type="email" {...register('email')} className="w-full border rounded-lg px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Wilaya *</label>
-                  <select {...register('wilaya')} className="w-full border rounded-lg px-3 py-2">
-                    {WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
-                  </select>
-                </div>
+
+                {typeClient === 'Entreprise' && (<>
+                  <FormField control={form.control} name="raisonSociale" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Raison sociale</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="nif" render={({ field }) => (
+                    <FormItem><FormLabel>NIF</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                  )} />
+                  <FormField control={form.control} name="nrc" render={({ field }) => (
+                    <FormItem><FormLabel>NRC</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                  )} />
+                </>)}
+
+                <FormField control={form.control} name="téléphone" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Téléphone *</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl><Input type="email" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="wilaya" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Wilaya *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>{WILAYAS.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </FormItem>
+                )} />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Adresse *</label>
-                <input {...register('adresse')} className="w-full border rounded-lg px-3 py-2" />
-              </div>
-              <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={closeModal} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Annuler</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+
+              <FormField control={form.control} name="adresse" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Adresse *</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={closeModal}>Annuler</Button>
+                <Button type="submit" disabled={createMut.isPending || updateMut.isPending}>
                   {editing ? 'Enregistrer' : 'Créer'}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

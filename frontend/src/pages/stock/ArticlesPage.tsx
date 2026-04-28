@@ -1,9 +1,20 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { Search, AlertTriangle, PlusCircle, X } from 'lucide-react'
 import { stockService } from '@/services/stockService'
-import { StockBadge } from '@/components/stock/StockBadge'
 import { AjustementModal } from '@/components/stock/AjustementModal'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import type { Article, ArticleCategorie } from '@/types/stock'
 
 const CATEGORIES: ArticleCategorie[] = [
@@ -11,25 +22,26 @@ const CATEGORIES: ArticleCategorie[] = [
   'Moteur','Électrique','Carrosserie','Accessoires','Autre',
 ]
 
+function stockVariant(actuel: number, min: number) {
+  if (actuel <= min) return 'stock-critical' as const
+  if (actuel <= min * 1.5) return 'stock-low' as const
+  return 'stock-ok' as const
+}
+
 export function ArticlesPage() {
   const qc = useQueryClient()
-
-  // Filtres
   const [search, setSearch]       = useState('')
-  const [categorie, setCategorie] = useState<ArticleCategorie | ''>('')
+  const [categorie, setCategorie] = useState<ArticleCategorie | 'all'>('all')
   const [stockBas, setStockBas]   = useState(false)
   const [page, setPage]           = useState(1)
+  const [ajustArticle, setAjustArticle] = useState<Article | null>(null)
   const PAGE_SIZE = 20
 
-  // Modal ajustement
-  const [ajustArticle, setAjustArticle] = useState<Article | null>(null)
-
-  // Query
   const { data, isLoading } = useQuery({
     queryKey: ['articles', { search, categorie, stockBas, page }],
     queryFn: () => stockService.getArticles({
       search: search || undefined,
-      categorie: (categorie as ArticleCategorie) || undefined,
+      categorie: categorie !== 'all' ? categorie : undefined,
       stockBas,
       page,
       pageSize: PAGE_SIZE,
@@ -37,7 +49,6 @@ export function ArticlesPage() {
     placeholderData: prev => prev,
   })
 
-  // Alertes stock bas
   const { data: alertes = [] } = useQuery({
     queryKey: ['alertes-stock'],
     queryFn: () => stockService.getAlertesActives(),
@@ -49,8 +60,7 @@ export function ArticlesPage() {
     qc.invalidateQueries({ queryKey: ['alertes-stock'] })
   }, [qc])
 
-  const handleDelete = async (id: string, ref: string) => {
-    if (!confirm(`Supprimer l'article ${ref} ?`)) return
+  const handleDelete = async (id: string) => {
     try {
       await stockService.delete(id)
       toast.success('Article supprimé')
@@ -61,137 +71,165 @@ export function ArticlesPage() {
   }
 
   const resetFiltres = () => {
-    setSearch(''); setCategorie(''); setStockBas(false); setPage(1)
+    setSearch(''); setCategorie('all'); setStockBas(false); setPage(1)
   }
 
   const articles = data?.items ?? []
   const total    = data?.total ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
-    <div style={{ padding: '1.5rem' }}>
-
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>📦 Stock — Articles</h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 13 }}>{total} articles trouvés</p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {alertes.length > 0 && (
-            <span style={{
-              background: '#fef2f2', border: '1px solid #fecaca',
-              color: '#dc2626', borderRadius: 20, padding: '0.375rem 0.875rem',
-              fontSize: 12, fontWeight: 700,
-            }}>
-              ⚠ {alertes.length} alerte{alertes.length > 1 ? 's' : ''} stock bas
-            </span>
-          )}
-          <button style={btnPrimary}>+ Nouvel article</button>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Stock — Articles"
+        subtitle={`${total} article${total !== 1 ? 's' : ''} trouvé${total !== 1 ? 's' : ''}`}
+        actions={
+          <div className="flex items-center gap-2">
+            {alertes.length > 0 && (
+              <Badge variant="destructive" className="gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                {alertes.length} alerte{alertes.length > 1 ? 's' : ''}
+              </Badge>
+            )}
+            <Button size="sm">
+              <PlusCircle className="h-4 w-4 mr-1.5" />
+              Nouvel article
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filtres */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center', background: '#f8fafc', padding: '0.875rem', borderRadius: 8 }}>
-        <input
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1) }}
-          placeholder="Référence, désignation, OEM…"
-          style={{ ...filterInput, minWidth: 220 }}
-        />
-        <select
-          value={categorie}
-          onChange={e => { setCategorie(e.target.value as ArticleCategorie | ''); setPage(1) }}
-          style={filterInput}
-        >
-          <option value="">Toutes catégories</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', userSelect: 'none' }}>
-          <input
-            type="checkbox"
-            checked={stockBas}
-            onChange={e => { setStockBas(e.target.checked); setPage(1) }}
+      <div className="flex flex-wrap gap-3 items-center rounded-lg border bg-muted/40 p-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            placeholder="Référence, désignation, OEM…"
+            className="pl-8 bg-background"
           />
-          Stock bas
-          {stockBas && alertes.length > 0 && (
-            <span style={{ background: '#dc2626', color: '#fff', borderRadius: 12, padding: '1px 6px', fontSize: 11 }}>
-              {alertes.length}
-            </span>
-          )}
-        </label>
-        <button onClick={resetFiltres} style={{ ...filterInput, cursor: 'pointer', background: '#fff', color: '#64748b' }}>
-          ✕ Réinitialiser
-        </button>
+        </div>
+
+        <Select value={categorie} onValueChange={v => { setCategorie(v as ArticleCategorie | 'all'); setPage(1) }}>
+          <SelectTrigger className="w-44 bg-background">
+            <SelectValue placeholder="Catégorie" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes catégories</SelectItem>
+            {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center gap-2">
+          <Switch
+            id="stock-bas"
+            checked={stockBas}
+            onCheckedChange={v => { setStockBas(v); setPage(1) }}
+          />
+          <Label htmlFor="stock-bas" className="text-sm cursor-pointer">
+            Stock bas
+            {stockBas && alertes.length > 0 && (
+              <Badge variant="destructive" className="ml-1.5 text-[10px] px-1.5 py-0">{alertes.length}</Badge>
+            )}
+          </Label>
+        </div>
+
+        {(search || categorie !== 'all' || stockBas) && (
+          <Button variant="ghost" size="sm" onClick={resetFiltres} className="gap-1 text-muted-foreground">
+            <X className="h-3.5 w-3.5" />
+            Réinitialiser
+          </Button>
+        )}
       </div>
 
       {/* Tableau */}
-      <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
-              {['Référence','Désignation','Catégorie','Stock','Min','PU HT vente','Emplacement','Statut','Actions'].map(h => (
-                <th key={h} style={{ padding: '0.625rem 0.875rem', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+      <div className="rounded-md border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Référence</TableHead>
+              <TableHead>Désignation</TableHead>
+              <TableHead>Catégorie</TableHead>
+              <TableHead className="text-right">Stock</TableHead>
+              <TableHead className="text-right">Min</TableHead>
+              <TableHead className="text-right">PU HT vente</TableHead>
+              <TableHead>Emplacement</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {isLoading ? (
-              <tr><td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Chargement…</td></tr>
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 9 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : articles.length === 0 ? (
-              <tr><td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Aucun article trouvé</td></tr>
-            ) : articles.map((a, i) => (
-              <tr key={a.id} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                <td style={td}><code style={{ fontSize: 12, background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>{a.référence}</code></td>
-                <td style={{ ...td, maxWidth: 200 }}>
-                  <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.désignation}</div>
-                  {a.référenceOEM && <div style={{ fontSize: 11, color: '#94a3b8' }}>OEM: {a.référenceOEM}</div>}
-                </td>
-                <td style={td}><span style={{ fontSize: 11, color: '#64748b' }}>{a.catégorie}</span></td>
-                <td style={{ ...td, fontWeight: 700, color: a.stockBas ? '#dc2626' : '#0f172a' }}>
-                  {a.stockActuel} <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: 11 }}>{a.unité}</span>
-                </td>
-                <td style={{ ...td, color: '#64748b' }}>{a.stockMinimum}</td>
-                <td style={{ ...td, fontWeight: 600 }}>{a.prixVente.toLocaleString('fr-DZ')} DA</td>
-                <td style={{ ...td, color: '#64748b', fontSize: 12 }}>{a.emplacementRayonnage ?? '—'}</td>
-                <td style={td}><StockBadge stockActuel={a.stockActuel} stockMinimum={a.stockMinimum} /></td>
-                <td style={{ ...td, whiteSpace: 'nowrap' }}>
-                  <div style={{ display: 'flex', gap: '0.375rem' }}>
-                    <button
-                      onClick={() => setAjustArticle(a)}
-                      style={actionBtn}
-                      title="Ajuster le stock"
-                    >
-                      ±
-                    </button>
-                    <button
-                      onClick={() => handleDelete(a.id, a.référence)}
-                      style={{ ...actionBtn, color: '#dc2626' }}
-                      title="Supprimer"
-                    >
-                      🗑
-                    </button>
+              <TableRow>
+                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                  Aucun article trouvé
+                </TableCell>
+              </TableRow>
+            ) : articles.map(a => (
+              <TableRow key={a.id}>
+                <TableCell>
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">{a.référence}</code>
+                </TableCell>
+                <TableCell className="max-w-[200px]">
+                  <p className="font-medium truncate">{a.désignation}</p>
+                  {a.référenceOEM && <p className="text-xs text-muted-foreground">OEM: {a.référenceOEM}</p>}
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-muted-foreground">{a.catégorie}</span>
+                </TableCell>
+                <TableCell className="text-right font-semibold">
+                  {a.stockActuel}
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">{a.unité}</span>
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">{a.stockMinimum}</TableCell>
+                <TableCell className="text-right font-medium">
+                  {a.prixVente.toLocaleString('fr-DZ')} DA
+                </TableCell>
+                <TableCell className="text-muted-foreground text-xs">{a.emplacementRayonnage ?? '—'}</TableCell>
+                <TableCell>
+                  <StatusBadge variant={stockVariant(a.stockActuel, a.stockMinimum)} />
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setAjustArticle(a)}>
+                      ± Ajust.
+                    </Button>
+                    <ConfirmDialog
+                      trigger={<Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive">Suppr.</Button>}
+                      title="Supprimer l'article"
+                      description={`Supprimer définitivement l'article ${a.référence} ? Cette action est irréversible.`}
+                      variant="destructive"
+                      confirmLabel="Supprimer"
+                      onConfirm={() => handleDelete(a.id)}
+                    />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
-      {total > PAGE_SIZE && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', fontSize: 13 }}>
-          <span style={{ color: '#64748b' }}>
-            Page {page} / {Math.ceil(total / PAGE_SIZE)}
-          </span>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={pageBtn}>← Précédent</button>
-            <button disabled={page * PAGE_SIZE >= total} onClick={() => setPage(p => p + 1)} style={pageBtn}>Suivant →</button>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>Page {page} / {totalPages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Précédent</Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Suivant →</Button>
           </div>
         </div>
       )}
 
-      {/* Modal ajustement */}
       {ajustArticle && (
         <AjustementModal
           article={ajustArticle}
@@ -201,23 +239,4 @@ export function ArticlesPage() {
       )}
     </div>
   )
-}
-
-// Styles
-const btnPrimary: React.CSSProperties = {
-  padding: '0.5rem 1rem', background: '#2563eb', color: '#fff',
-  border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13,
-}
-const filterInput: React.CSSProperties = {
-  padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0',
-  borderRadius: 6, fontSize: 13, background: '#fff',
-}
-const td: React.CSSProperties = { padding: '0.625rem 0.875rem', verticalAlign: 'middle' }
-const actionBtn: React.CSSProperties = {
-  padding: '0.25rem 0.5rem', background: '#f1f5f9',
-  border: '1px solid #e2e8f0', borderRadius: 4, cursor: 'pointer', fontSize: 13,
-}
-const pageBtn: React.CSSProperties = {
-  padding: '0.375rem 0.75rem', border: '1px solid #e2e8f0',
-  borderRadius: 6, cursor: 'pointer', background: '#fff', fontSize: 13,
 }

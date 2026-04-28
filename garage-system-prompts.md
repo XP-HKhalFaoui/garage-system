@@ -1465,3 +1465,362 @@ claude
 ```
 
 > **Conseil** : placer le fichier `CLAUDE.md` à la racine de chaque dossier (`backend/` et `frontend/`) pour que Claude Code charge automatiquement le contexte du projet à chaque session.
+
+---
+
+## Module 12 — Migration UI vers shadcn/ui
+
+> **Objectif** : remplacer les composants UI ad-hoc par shadcn/ui (Radix UI + Tailwind CSS).  
+> **Règle absolue** : migrer composant par composant, jamais tout en une seule PR. Chaque étape doit laisser l'app fonctionnelle.
+
+---
+
+### Phase 0 — Setup Tailwind + shadcn/ui
+
+#### 62-ui-setup-tailwind-shadcn.txt
+```
+Tu es un expert Vite + React + TypeScript. Installe et configure Tailwind CSS v3 et shadcn/ui dans le projet frontend existant (Vite + React 18 + TS).
+
+Étapes exactes :
+
+1. Installer les dépendances :
+   yarn add -D tailwindcss postcss autoprefixer
+   yarn add class-variance-authority clsx tailwind-merge lucide-react
+   npx tailwindcss init -p
+
+2. Configurer tailwind.config.js :
+   - content: ["./index.html", "./src/**/*.{ts,tsx}"]
+   - Ajouter le plugin @tailwindcss/forms si besoin (formulaires)
+   - Theme extend : palette de couleurs garage (primary, accent, destructive, muted)
+   - Ajouter les variables CSS pour shadcn (border-radius, couleurs via CSS variables)
+
+3. Modifier src/index.css :
+   - Ajouter les directives @tailwind base/components/utilities
+   - Déclarer les CSS variables :root et .dark (couleurs shadcn standard)
+
+4. Initialiser shadcn/ui :
+   npx shadcn@latest init
+   Répondre aux questions : TypeScript=Yes, style=default, baseColor=slate, cssVariables=Yes, alias=@/components/ui
+
+5. Configurer tsconfig.json / vite.config.ts pour l'alias @/ → ./src/
+
+6. Installer les premiers composants de base :
+   npx shadcn@latest add button card badge input label select dialog sheet table tabs
+
+7. Créer src/lib/utils.ts avec la fonction cn() (cn = clsx + twMerge).
+
+Vérification : importer <Button /> dans App.tsx et vérifier que le style s'applique correctement.
+```
+
+---
+
+### Phase 1 — Composants fondamentaux
+
+#### 63-ui-design-system.txt
+```
+Tu es un expert React + TypeScript + Tailwind CSS. Crée le design system de base pour le garage en s'appuyant sur shadcn/ui.
+
+Fichiers à créer dans src/components/ui/ (ne pas modifier les fichiers générés par shadcn, créer des wrappers) :
+
+1. src/components/ui/stat-card.tsx
+   Composant <StatCard label title value delta? icon? trend? />
+   - Card shadcn avec padding 6
+   - Titre en texte muted-foreground, valeur en text-2xl font-bold
+   - Delta optionnel : badge vert si positif, rouge si négatif
+   - Icône lucide-react en coin supérieur droit (couleur primaire)
+
+2. src/components/ui/data-table.tsx
+   Wrapper autour de la Table shadcn avec :
+   - Props : columns: ColumnDef<T>[], data: T[], isLoading?: boolean, emptyMessage?: string
+   - Loading : afficher 5 lignes de Skeleton
+   - Empty state : centré avec icône et message
+
+3. src/components/ui/page-header.tsx
+   Composant <PageHeader title subtitle? actions? />
+   - Layout flex items-center justify-between
+   - Breadcrumb optionnel via shadcn Breadcrumb
+
+4. src/components/ui/status-badge.tsx
+   Composant <StatusBadge status variant />
+   - Variants : or-status (EnAttente|EnCours|Suspendu|Terminé|Livré)
+   - Variants : stock-status (ok|low|critical)
+   - Variants : invoice-status (emise|partielle|soldee|retard|annulee)
+   - Couleurs cohérentes via cva() de class-variance-authority
+
+5. src/components/ui/confirm-dialog.tsx
+   Wrapper AlertDialog shadcn :
+   <ConfirmDialog trigger title description onConfirm variant="destructive"? />
+
+Documenter chaque composant avec des exemples d'utilisation en commentaire JSDoc.
+```
+
+---
+
+### Phase 2 — Migration des pages existantes
+
+#### 64-ui-migrate-layout.txt
+```
+Tu es un expert React + TypeScript + shadcn/ui. Migre le layout principal de l'application vers shadcn/ui.
+
+Fichier : src/components/layout/AppLayout.tsx
+
+Nouveau layout basé sur shadcn/ui + Tailwind :
+
+Structure :
+- Sidebar fixe gauche (w-64) avec :
+  * Logo garage en haut (image ou texte stylisé)
+  * Navigation par groupe : Atelier (Kanban, Planning) | Stock | CRM | Facturation | RH | Stats | Paramètres
+  * Chaque nav item : icon lucide-react + label + badge de compteur si pertinent
+  * Utilisateur connecté en bas : avatar + nom + rôle + bouton déconnexion
+
+- Zone principale droite :
+  * Topbar : breadcrumb à gauche, bouton notifications (cloche avec badge) + avatar profil à droite
+  * Contenu : <main> avec padding et scroll
+
+Composants shadcn à utiliser :
+- Sidebar : div custom Tailwind (pas de composant shadcn dédié)
+- Avatar (shadcn) pour l'utilisateur
+- DropdownMenu (shadcn) pour le menu utilisateur
+- Sheet (shadcn) pour la sidebar mobile (responsive)
+
+Responsive :
+- Mobile : sidebar cachée, burger menu → Sheet
+- lg+ : sidebar fixe toujours visible
+
+Utiliser cn() pour les classes conditionnelles (item actif vs inactif).
+```
+
+#### 65-ui-migrate-dashboard.txt
+```
+Tu es un expert React + TypeScript + shadcn/ui + Recharts. Migre la page Dashboard vers shadcn/ui.
+
+Fichier : src/pages/DashboardPage.tsx
+
+La page doit utiliser les composants du design system créés en Phase 1.
+
+Layout :
+1. <PageHeader title="Tableau de bord" subtitle={`${dateAujourd'hui}`} />
+
+2. Grille 4 colonnes : 4 <StatCard /> avec données de /api/stats/recap-journee :
+   - CA du jour (DZD) avec delta vs hier
+   - OR en cours (nombre, live via useQuery refetchInterval=30000)
+   - Alertes actives (badge rouge si > 0)
+   - Factures en retard (badge orange)
+
+3. Grille 2 colonnes :
+   - Card "OR du jour" : mini-table (numéro, véhicule, statut via <StatusBadge />, technicien)
+     Lien "Voir le Kanban →"
+   - Card "Alertes stock bas" : liste avec <StatusBadge status="critical" /> et lien vers stock
+
+4. Card "Évolution CA — 30 derniers jours" (pleine largeur) :
+   Recharts <LineChart> avec ResponsiveContainer, tooltip en DZD, loading via Skeleton shadcn
+
+Chaque Card utilise le composant Card de shadcn (Card, CardHeader, CardTitle, CardContent).
+Utiliser useQuery TanStack Query pour chaque bloc de données.
+```
+
+#### 66-ui-migrate-kanban.txt
+```
+Tu es un expert React + TypeScript + shadcn/ui + @dnd-kit. Migre la page Kanban OR vers shadcn/ui.
+
+Fichier : src/pages/or/KanbanPage.tsx
+
+Header de page :
+- <PageHeader title="Kanban Atelier" subtitle={dateAujourd'hui} />
+- Stats rapides en ligne : badges (EnAttente: N | EnCours: N | Terminés: N)
+- Bouton "Nouvel OR" (Button shadcn variant="default")
+
+Colonnes Kanban :
+Chaque colonne = une Card shadcn avec CardHeader (titre + compteur badge) et CardContent scrollable.
+Couleurs d'en-tête par statut : slate (attente), blue (en cours), yellow (suspendu), green (terminé), gray (livré).
+
+Composant <ORCard /> migré vers shadcn/ui :
+- Card avec shadow-sm hover:shadow-md transition
+- Badge shadcn pour le numéro OR (variant selon priorité : default ou destructive)
+- <StatusBadge /> pour le statut
+- <ORTimer /> inchangé (composant métier, pas UI)
+- Avatar shadcn pour le technicien (initiales)
+- Boutons d'action : Button variant="ghost" size="sm" avec icônes lucide-react
+
+Sheet shadcn pour le drawer de détail OR (remplace tout composant drawer custom).
+
+Garder toute la logique @dnd-kit existante, seul le markup/style change.
+```
+
+#### 67-ui-migrate-stock.txt
+```
+Tu es un expert React + TypeScript + shadcn/ui. Migre la page Stock Articles vers shadcn/ui.
+
+Fichier : src/pages/stock/ArticlesPage.tsx
+
+Toolbar :
+- Input shadcn avec icône Search (lucide) pour la recherche
+- Select shadcn pour la catégorie
+- Switch shadcn + label "Stock bas seulement" avec Badge rouge (compteur)
+- Button "Réinitialiser" variant="ghost"
+- Séparateur vertical
+- Button "Nouvel article" | Button variant="outline" "Importer CSV" | Button variant="outline" "Exporter"
+
+Table via <DataTable /> du design system :
+Colonnes définies avec ColumnDef<Article>[] :
+- Référence (code monospace)
+- Désignation + description en sous-titre gris
+- Catégorie (Badge shadcn)
+- Stock : nombre + unité + <StatusBadge stock-status />
+- Seuil min
+- Prix vente (formaté DZD)
+- Emplacement
+- Actions : DropdownMenu shadcn (Éditer | Mouvements | Ajustement | Désactiver)
+
+Dialog shadcn pour le formulaire "Nouvel article" / "Éditer article" :
+- React Hook Form + Zod (inchangé)
+- Utiliser les composants Form, FormField, FormItem, FormLabel, FormControl, FormMessage de shadcn
+
+Sheet shadcn pour le drawer "Historique des mouvements".
+
+Modal ajustement rapide → AlertDialog ou Dialog shadcn.
+```
+
+#### 68-ui-migrate-rh.txt
+```
+Tu es un expert React + TypeScript + shadcn/ui. Migre les pages RH vers shadcn/ui.
+
+Fichiers : src/pages/rh/EmployesPage.tsx, PointagePage.tsx, PaiePage.tsx, CongesPage.tsx
+
+Patterns communs à appliquer dans toutes ces pages :
+
+1. <PageHeader /> avec titre, sous-titre et bouton d'action principal
+
+2. Tabs shadcn pour la navigation entre vues (ex: PaiePage : "Bulletins" | "Primes" | "Historique")
+
+3. Toutes les tables → <DataTable /> du design system
+
+4. Tous les formulaires → Dialog shadcn + Form shadcn + React Hook Form (inchangé)
+
+5. Confirmations de suppression/désactivation → <ConfirmDialog /> du design system
+
+Spécificités EmployesPage :
+- Avatar shadcn pour les employés (initiales colorées par département)
+- Badge pour le poste (couleur par type : Technicien=blue, Caissier=green, RH=purple)
+- Badge pour le type contrat (CDI=vert, CDD=orange, Temporaire=gray)
+
+Spécificités PointagePage :
+- Calendar shadcn pour sélectionner le mois
+- Tableau avec statut Présent/Absent/Congé via <StatusBadge />
+- Progress shadcn pour le taux de présence
+
+Spécificités PaiePage :
+- Card récapitulatif mensuel (SalaireBrut, Cotisations, NetAPayer) avec séparateurs
+- Button variant="outline" + icône Download pour télécharger le PDF
+
+Spécificités CongesPage :
+- Badge par statut demande : EnAttente=yellow, Approuvé=green, Refusé=red
+- DateRangePicker (construire avec 2 inputs date ou utiliser react-day-picker déjà inclus dans shadcn Calendar)
+```
+
+---
+
+### Phase 3 — Thème & Cohérence finale
+
+#### 69-ui-theme-dark-mode.txt
+```
+Tu es un expert React + TypeScript + Tailwind CSS + shadcn/ui. Ajoute le dark mode et finalise le thème.
+
+1. Palette de couleurs personnalisée pour le garage (dans tailwind.config.js + CSS variables) :
+   Mode clair :
+   - primary : bleu foncé (#1E3A5F) — couleur principale du garage
+   - accent  : orange (#F97316) — couleur d'alerte/action
+   - background : blanc cassé (#FAFAFA)
+   - card : blanc (#FFFFFF)
+   Mode sombre :
+   - primary : bleu clair (#60A5FA)
+   - accent  : orange vif (#FB923C)
+   - background : #0F172A
+   - card : #1E293B
+
+2. ThemeProvider :
+   Créer src/contexts/ThemeContext.tsx :
+   - Utilise localStorage pour persister la préférence ("light"|"dark"|"system")
+   - Applique la classe "dark" sur <html> selon la préférence + prefers-color-scheme
+   - Hook useTheme() : { theme, setTheme }
+
+3. Bouton toggle dark/dark dans la Topbar (icône Sun/Moon lucide-react) via DropdownMenu (Light | Dark | Système)
+
+4. Audit visuel des composants :
+   - Vérifier que tous les <StatusBadge />, <StatCard />, <DataTable /> s'affichent correctement en dark mode
+   - Aucune couleur hardcodée — tout via variables CSS ou classes Tailwind dark:
+
+5. Animations :
+   - Ajouter transition-colors duration-200 sur tous les éléments interactifs
+   - Sidebar nav items : hover avec bg-accent/10, actif avec bg-accent/20 et border-l-2 border-primary
+```
+
+#### 70-ui-forms-validation.txt
+```
+Tu es un expert React + TypeScript + React Hook Form + Zod + shadcn/ui. Standardise tous les formulaires.
+
+Créer src/components/ui/form-field-wrapper.tsx :
+Composant utilitaire qui encapsule FormField + FormItem + FormLabel + FormControl + FormMessage de shadcn.
+Props : name, label, required?, description?, children (le champ React Hook Form).
+
+Composants de formulaire à créer dans src/components/form/ :
+1. <PhoneInput /> : Input shadcn avec auto-formatage algérien (0555 XXX XXX ou +213)
+2. <AmountInput /> : Input shadcn avec suffixe "DZD", type="number", min=0, step="0.01"
+3. <DatePickerField /> : Popover + Calendar shadcn, formatage DD/MM/YYYY, locale fr
+4. <AsyncSelectField /> : Input recherche avec debounce 300ms, résultats en Popover, sélection unique ou multiple
+5. <RoleSelectField /> : Select shadcn pré-rempli avec les rôles disponibles pour l'utilisateur connecté
+
+Pattern de formulaire standard à appliquer partout :
+const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues })
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <FormFieldWrapper name="..." label="..." required>
+      <Input {...field} />
+    </FormFieldWrapper>
+    <Button type="submit" disabled={form.formState.isSubmitting}>
+      {form.formState.isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
+      Enregistrer
+    </Button>
+  </form>
+</Form>
+
+Toast (sonner) pour tous les retours : success, error, info — uniformiser les messages.
+```
+
+---
+
+### Checklist de migration
+
+```
+Phase 0 — Setup
+  [ ] Tailwind CSS installé et configuré
+  [ ] shadcn/ui initialisé (npx shadcn@latest init)
+  [ ] Composants de base ajoutés (button, card, badge, input, dialog, sheet, table, tabs, select, label)
+  [ ] Alias @/ configuré dans vite.config.ts + tsconfig.json
+  [ ] cn() disponible dans src/lib/utils.ts
+
+Phase 1 — Design system
+  [ ] StatCard
+  [ ] DataTable (avec Skeleton + empty state)
+  [ ] PageHeader
+  [ ] StatusBadge (or-status, stock-status, invoice-status)
+  [ ] ConfirmDialog
+
+Phase 2 — Pages migrées
+  [ ] AppLayout (sidebar + topbar)
+  [ ] DashboardPage
+  [ ] KanbanPage + ORCard
+  [ ] ArticlesPage (Stock)
+  [ ] EmployesPage + PointagePage + PaiePage + CongesPage (RH)
+  [ ] ClientsPage
+  [ ] VéhiculesPage + VehiculeDetailPage
+  [ ] FacturesPage + DevisPage
+  [ ] StatsPage
+
+Phase 3 — Finalisation
+  [ ] Dark mode opérationnel
+  [ ] Formulaires standardisés (PhoneInput, AmountInput, DatePicker, AsyncSelect)
+  [ ] Toast uniformisés (sonner)
+  [ ] Audit responsive mobile (Sheet sidebar)
+  [ ] Aucune couleur hardcodée restante
+```

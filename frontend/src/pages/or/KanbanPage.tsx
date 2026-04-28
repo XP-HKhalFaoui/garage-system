@@ -1,22 +1,37 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { PlusCircle } from 'lucide-react'
 import { orService } from '@/services/orService'
 import { useSignalR } from '@/hooks/useSignalR'
 import { ORCard } from '@/components/or/ORCard'
 import { SignalRIndicator } from '@/components/or/SignalRIndicator'
+import { PageHeader } from '@/components/ui/page-header'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import type { ORStatut, ORSummary } from '@/types/or'
 
-const COLONNES: { statut: ORStatut; label: string; color: string }[] = [
-  { statut: 'EnAttente',         label: 'En attente',         color: '#f59e0b' },
-  { statut: 'EnCours',           label: 'En cours',           color: '#3b82f6' },
-  { statut: 'Suspendu',          label: 'Suspendu',           color: '#8b5cf6' },
-  { statut: 'TerminéTechnicien', label: 'Terminé technicien', color: '#10b981' },
-  { statut: 'Livré',             label: 'Livré',              color: '#6b7280' },
+// ── Colonnes ──────────────────────────────────────────────────────────────────
+const COLONNES: {
+  statut: ORStatut
+  label: string
+  headerClass: string
+  dotClass: string
+}[] = [
+  { statut: 'EnAttente',         label: 'En attente',         headerClass: 'border-amber-400',  dotClass: 'bg-amber-400' },
+  { statut: 'EnCours',           label: 'En cours',           headerClass: 'border-blue-500',   dotClass: 'bg-blue-500'  },
+  { statut: 'Suspendu',          label: 'Suspendu',           headerClass: 'border-purple-500', dotClass: 'bg-purple-500'},
+  { statut: 'TerminéTechnicien', label: 'Terminé technicien', headerClass: 'border-green-500',  dotClass: 'bg-green-500' },
+  { statut: 'Livré',             label: 'Livré',              headerClass: 'border-slate-400',  dotClass: 'bg-slate-400' },
 ]
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export function KanbanPage() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
 
   const { data: ors = [], isLoading } = useQuery({
     queryKey: ['or', 'today'],
@@ -26,11 +41,10 @@ export function KanbanPage() {
 
   const { data: stats } = useQuery({
     queryKey: ['or', 'stats-today'],
-    queryFn:  () => orService.getStatsToday(),
+    queryFn: () => orService.getStatsToday(),
     refetchInterval: 30_000,
   })
 
-  /* ── SignalR ──────────────────────────────────────────────────────────── */
   const { state: signalRState, on } = useSignalR('/hubs/ordres')
 
   const invalidate = useCallback(() => {
@@ -41,18 +55,17 @@ export function KanbanPage() {
     const unsubs = [
       on('NotifyORCreated', (d: unknown) => {
         invalidate()
-        const { numéro } = d as { numéro: string }
-        toast.info(`🆕 Nouvel OR : ${numéro}`)
+        toast.info(`Nouvel OR : ${(d as { numéro: string }).numéro}`)
       }),
       on('NotifyORStatusChanged', (d: unknown) => {
         invalidate()
         const { numéro, statut } = d as { numéro: string; statut: string }
-        toast.success(`✅ OR ${numéro} → ${statut}`)
+        toast.success(`OR ${numéro} → ${statut}`)
       }),
       on('NotifyORAssigned', (d: unknown) => {
         invalidate()
         const { numéro, technicien } = d as { numéro: string; technicien: string }
-        toast.info(`👷 OR ${numéro} assigné à ${technicien}`)
+        toast.info(`OR ${numéro} assigné à ${technicien}`)
       }),
     ]
     return () => unsubs.forEach(fn => fn?.())
@@ -60,98 +73,73 @@ export function KanbanPage() {
 
   const byStatut = (s: ORStatut): ORSummary[] => ors.filter(o => o.statut === s)
 
-  /* ── Render ───────────────────────────────────────────────────────────── */
-  if (isLoading) {
-    return <div style={{ padding: '2rem', color: '#64748b' }}>Chargement du Kanban…</div>
-  }
-
   const today = new Date().toLocaleDateString('fr-DZ', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 
   return (
-    <div style={{ padding: '1.5rem', minHeight: '100vh', background: '#f8fafc' }}>
+    <div className="space-y-4">
+      {/* Header */}
+      <PageHeader
+        title="Atelier — Kanban"
+        subtitle={today.charAt(0).toUpperCase() + today.slice(1)}
+        actions={
+          <div className="flex items-center gap-3">
+            <SignalRIndicator state={signalRState} />
+            <Button size="sm" onClick={() => navigate('/or/nouveau')}>
+              <PlusCircle className="h-4 w-4 mr-1.5" />
+              Nouvel OR
+            </Button>
+          </div>
+        }
+      />
 
-      {/* ── Header ───────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', textTransform: 'capitalize' }}>
-            🔧 Atelier — {today}
-          </h1>
-
-          {stats && (
-            <div style={{ display: 'flex', gap: '1.5rem', marginTop: 8, flexWrap: 'wrap' }}>
-              {[
-                { label: 'Total',      value: stats.total,    color: '#64748b' },
-                { label: 'En attente', value: stats.enAttente, color: '#f59e0b' },
-                { label: 'En cours',   value: stats.enCours,  color: '#3b82f6' },
-                { label: 'Terminés',   value: stats.terminés, color: '#10b981' },
-              ].map(s => (
-                <span key={s.label} style={{ fontSize: 13 }}>
-                  <span style={{ color: '#94a3b8' }}>{s.label} </span>
-                  <span style={{ fontWeight: 700, color: s.color }}>{s.value}</span>
-                </span>
-              ))}
-              <span style={{ fontSize: 13 }}>
-                <span style={{ color: '#94a3b8' }}>CA </span>
-                <span style={{ fontWeight: 700, color: '#0f172a' }}>
-                  {stats.caTotalHT.toLocaleString('fr-DZ')} DA
-                </span>
-              </span>
-            </div>
-          )}
+      {/* Stats rapides */}
+      {stats && (
+        <div className="flex flex-wrap gap-3">
+          {[
+            { label: 'Total',      value: stats.total,     className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+            { label: 'En attente', value: stats.enAttente, className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+            { label: 'En cours',   value: stats.enCours,   className: 'bg-blue-100  text-blue-700  dark:bg-blue-900/40  dark:text-blue-300'  },
+            { label: 'Terminés',   value: stats.terminés,  className: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+          ].map(s => (
+            <span key={s.label} className={cn('inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold', s.className)}>
+              {s.label} <span className="font-bold">{s.value}</span>
+            </span>
+          ))}
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            CA : <span className="font-semibold text-foreground">{stats.caTotalHT.toLocaleString('fr-DZ')} DA</span>
+          </span>
         </div>
+      )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <SignalRIndicator state={signalRState} />
-          <button style={{
-            padding: '0.5rem 1rem',
-            background: '#2563eb', color: '#fff',
-            border: 'none', borderRadius: 6,
-            cursor: 'pointer', fontWeight: 600, fontSize: 13,
-          }}>
-            + Nouvel OR
-          </button>
-        </div>
-      </div>
-
-      {/* ── Board ────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '0.875rem', overflowX: 'auto', alignItems: 'flex-start', paddingBottom: '1rem' }}>
+      {/* Board */}
+      <div className="flex gap-3 overflow-x-auto pb-4 items-start">
         {COLONNES.map(col => {
           const cards = byStatut(col.statut)
           return (
-            <div key={col.statut} style={{
-              minWidth: 240, maxWidth: 280, flex: '0 0 240px',
-              background: '#f1f5f9', borderRadius: 10,
-              padding: '0.75rem',
-              display: 'flex', flexDirection: 'column', gap: 8,
-            }}>
+            <div
+              key={col.statut}
+              className="flex-none w-60 bg-muted/60 rounded-xl p-2.5 flex flex-col gap-2"
+            >
               {/* Colonne header */}
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                paddingLeft: '0.5rem',
-                borderLeft: `3px solid ${col.color}`,
-                marginBottom: 4,
-              }}>
-                <span style={{ fontWeight: 600, fontSize: 13, color: '#334155' }}>{col.label}</span>
-                <span style={{
-                  background: col.color, color: '#fff',
-                  fontSize: 11, fontWeight: 700,
-                  padding: '2px 8px', borderRadius: 12,
-                }}>
-                  {cards.length}
-                </span>
+              <div className={cn('flex items-center justify-between pl-2 border-l-[3px] mb-1', col.headerClass)}>
+                <span className="text-sm font-semibold text-foreground">{col.label}</span>
+                <Badge variant="secondary" className="text-xs px-1.5 min-w-[1.5rem] justify-center">
+                  {isLoading ? '…' : cards.length}
+                </Badge>
               </div>
 
               {/* Cards */}
-              {cards.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 12, padding: '1.5rem 0' }}>
-                  Aucun OR
-                </div>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-40 rounded-xl" />
+                  <Skeleton className="h-32 rounded-xl" />
+                </>
+              ) : cards.length === 0 ? (
+                <p className="text-center text-xs text-muted-foreground py-6">Aucun OR</p>
               ) : (
-                cards.map(or => (
-                  <ORCard key={or.id} or={or} />
-                ))
+                cards.map(or => <ORCard key={or.id} or={or} />)
               )}
             </div>
           )

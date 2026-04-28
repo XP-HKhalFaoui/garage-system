@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { TokenResponse, User } from '@/types/auth'
-import { setAccessToken } from './httpClient'
+import httpClient, { setAccessToken } from './httpClient'
 
 export const authService = {
   async login(email: string, password: string): Promise<TokenResponse> {
@@ -13,7 +13,7 @@ export const authService = {
   async logout(): Promise<void> {
     const refreshToken = localStorage.getItem('refreshToken')
     try {
-      await axios.post('/api/auth/logout', { refreshToken })
+      await httpClient.post('/auth/logout', { refreshToken })
     } finally {
       setAccessToken(null)
       localStorage.removeItem('refreshToken')
@@ -21,7 +21,7 @@ export const authService = {
   },
 
   async getMe(): Promise<User> {
-    const { data } = await axios.get<User>('/api/auth/me')
+    const { data } = await httpClient.get<User>('/auth/me')
     return data
   },
 

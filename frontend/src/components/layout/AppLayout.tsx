@@ -1,13 +1,25 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard, Wrench, PlusCircle, Users, Car, Mail,
+  FileText, Receipt, Wallet, Package, PackageSearch, AlertTriangle,
+  UserCircle, Clock, UmbrellaOff, DollarSign, BarChart2, Settings,
+  LogOut, Menu,
+} from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { SignalRNotifications } from '@/components/layout/SignalRNotifications'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface NavItem {
   label: string
   to: string
-  icon: string
+  icon: React.ElementType
   roles?: string[]
 }
 
@@ -22,74 +34,134 @@ const NAV: NavGroup[] = [
   {
     title: 'Général',
     items: [
-      { label: 'Tableau de bord', to: '/dashboard',       icon: '🏠' },
+      { label: 'Tableau de bord', to: '/dashboard',            icon: LayoutDashboard },
     ],
   },
   {
     title: 'Atelier',
     items: [
-      { label: 'Kanban OR',       to: '/or/kanban',        icon: '🔧' },
-      { label: 'Nouvel OR',       to: '/or/nouveau',       icon: '➕' },
-      { label: 'Clients',         to: '/clients',          icon: '👥' },
-      { label: 'Véhicules',       to: '/vehicules',        icon: '🚗' },
-      { label: 'Offres entretien', to: '/offres',           icon: '📬' },
+      { label: 'Kanban OR',        to: '/or/kanban',            icon: Wrench },
+      { label: 'Nouvel OR',        to: '/or/nouveau',           icon: PlusCircle },
+      { label: 'Clients',          to: '/clients',              icon: Users },
+      { label: 'Véhicules',        to: '/vehicules',            icon: Car },
+      { label: 'Offres entretien', to: '/offres',               icon: Mail },
     ],
   },
   {
     title: 'Facturation',
     roles: ['Caissier'],
     items: [
-      { label: 'Devis',           to: '/facturation/devis',    icon: '📋', roles: ['Caissier'] },
-      { label: 'Factures',        to: '/facturation/factures', icon: '🧾', roles: ['Caissier'] },
-      { label: 'Caisse du jour',  to: '/caisse',               icon: '💰', roles: ['Caissier'] },
+      { label: 'Devis',           to: '/facturation/devis',    icon: FileText,        roles: ['Caissier'] },
+      { label: 'Factures',        to: '/facturation/factures', icon: Receipt,         roles: ['Caissier'] },
+      { label: 'Caisse du jour',  to: '/caisse',               icon: Wallet,          roles: ['Caissier'] },
     ],
   },
   {
     title: 'Stock',
     items: [
-      { label: 'Articles',          to: '/stock/articles',       icon: '📦' },
-      { label: 'Bons de réception', to: '/stock/bons-reception', icon: '📥' },
-      { label: 'Alertes stock',     to: '/stock/alertes',        icon: '⚠️' },
+      { label: 'Articles',          to: '/stock/articles',       icon: Package },
+      { label: 'Bons de réception', to: '/stock/bons-reception', icon: PackageSearch },
+      { label: 'Alertes stock',     to: '/stock/alertes',        icon: AlertTriangle },
     ],
   },
   {
     title: 'Ressources humaines',
     roles: ['RH'],
     items: [
-      { label: 'Employés',        to: '/rh/employes',      icon: '👤', roles: ['RH'] },
-      { label: 'Pointage',        to: '/rh/pointage',      icon: '🕐', roles: ['RH'] },
-      { label: 'Congés',          to: '/rh/conges',        icon: '🏖️', roles: ['RH'] },
-      { label: 'Bulletins de paie', to: '/rh/paie',        icon: '💵', roles: ['RH'] },
+      { label: 'Employés',          to: '/rh/employes', icon: UserCircle,  roles: ['RH'] },
+      { label: 'Pointage',          to: '/rh/pointage', icon: Clock,       roles: ['RH'] },
+      { label: 'Congés',            to: '/rh/conges',   icon: UmbrellaOff, roles: ['RH'] },
+      { label: 'Bulletins de paie', to: '/rh/paie',     icon: DollarSign,  roles: ['RH'] },
     ],
   },
   {
     title: 'Administration',
     roles: ['Admin'],
     items: [
-      { label: 'Statistiques',    to: '/stats',            icon: '📊', roles: ['Admin'] },
-      { label: 'Paramètres',      to: '/parametres',       icon: '⚙️', roles: ['Admin'] },
+      { label: 'Statistiques', to: '/stats',      icon: BarChart2, roles: ['Admin'] },
+      { label: 'Paramètres',   to: '/parametres', icon: Settings,  roles: ['Admin'] },
     ],
   },
 ]
 
 const ROLE_LABEL: Record<string, string> = {
-  Admin:      'Administrateur',
-  Technicien: 'Technicien',
-  Caissier:   'Caissier',
-  RH:         'RH',
+  Admin: 'Administrateur', Technicien: 'Technicien', Caissier: 'Caissier', RH: 'RH',
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function hasAccess(roles: string[] | undefined, userRoles: string[]): boolean {
   if (!roles || roles.length === 0) return true
   return userRoles.includes('Admin') || roles.some(r => userRoles.includes(r))
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
+function initials(email: string) {
+  return email.slice(0, 2).toUpperCase()
+}
+
+// ── Nav items (shared between sidebar + mobile sheet) ────────────────────────
+function NavItems({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
+  const { user } = useAuth()
+  const userRoles = user?.roles ?? []
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <nav className="flex-1 overflow-y-auto py-2 space-y-0.5">
+        {NAV.map(group => {
+          if (!hasAccess(group.roles, userRoles)) return null
+          const visibleItems = group.items.filter(i => hasAccess(i.roles, userRoles))
+          if (visibleItems.length === 0) return null
+
+          return (
+            <div key={group.title} className="mb-1">
+              {!collapsed && (
+                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                  {group.title}
+                </p>
+              )}
+              {visibleItems.map(item => {
+                const Icon = item.icon
+                const link = (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-none transition-colors',
+                        'border-l-2',
+                        isActive
+                          ? 'border-primary bg-slate-800 text-white'
+                          : 'border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-100',
+                        collapsed && 'justify-center px-0',
+                      )
+                    }
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </NavLink>
+                )
+
+                if (collapsed) {
+                  return (
+                    <Tooltip key={item.to}>
+                      <TooltipTrigger asChild>{link}</TooltipTrigger>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
+                    </Tooltip>
+                  )
+                }
+                return link
+              })}
+            </div>
+          )
+        })}
+      </nav>
+    </TooltipProvider>
+  )
+}
+
+// ── Sidebar (desktop) ─────────────────────────────────────────────────────────
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const userRoles = user?.roles ?? []
 
   const handleLogout = async () => {
     await logout()
@@ -97,121 +169,122 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   }
 
   return (
-    <aside style={{
-      width: collapsed ? '56px' : '220px',
-      minHeight: '100vh',
-      background: '#111827',
-      color: '#d1d5db',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'width 0.2s ease',
-      overflow: 'hidden',
-      flexShrink: 0,
-    }}>
-      {/* Logo + toggle */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
-        padding: collapsed ? '1rem 0' : '1rem 1rem',
-        borderBottom: '1px solid #1f2937',
-        minHeight: '56px',
-      }}>
+    <aside
+      className={cn(
+        'hidden lg:flex flex-col bg-slate-900 text-slate-300 transition-all duration-200 shrink-0 h-screen sticky top-0',
+        collapsed ? 'w-14' : 'w-56',
+      )}
+    >
+      {/* Logo + collapse toggle */}
+      <div className={cn(
+        'flex items-center border-b border-slate-800 h-14 shrink-0',
+        collapsed ? 'justify-center' : 'justify-between px-3',
+      )}>
         {!collapsed && (
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'white', whiteSpace: 'nowrap' }}>
-            🔩 Garage
-          </span>
+          <span className="font-bold text-white text-sm truncate">⚙ Garage System</span>
         )}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onToggle}
-          title={collapsed ? 'Déplier' : 'Replier'}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: '#9ca3af', fontSize: '1.1rem', padding: '0.25rem',
-            lineHeight: 1,
-          }}
+          className="h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-800"
         >
-          {collapsed ? '▶' : '◀'}
-        </button>
+          <Menu className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
-        {NAV.map(group => {
-          if (!hasAccess(group.roles, userRoles)) return null
-          const visibleItems = group.items.filter(i => hasAccess(i.roles, userRoles))
-          if (visibleItems.length === 0) return null
+      <NavItems collapsed={collapsed} />
 
-          return (
-            <div key={group.title} style={{ marginBottom: '0.25rem' }}>
-              {!collapsed && (
-                <div style={{
-                  padding: '0.5rem 1rem 0.25rem',
-                  fontSize: '0.65rem', fontWeight: 700,
-                  color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {group.title}
-                </div>
-              )}
-              {visibleItems.map(item => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  title={collapsed ? item.label : undefined}
-                  style={({ isActive }) => ({
-                    display: 'flex', alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: collapsed ? '0.6rem 0' : '0.5rem 1rem',
-                    justifyContent: collapsed ? 'center' : 'flex-start',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    borderRadius: '0',
-                    background: isActive ? '#1f2937' : 'transparent',
-                    color: isActive ? 'white' : '#9ca3af',
-                    borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
-                    transition: 'background 0.15s, color 0.15s',
-                    whiteSpace: 'nowrap',
-                  })}
-                >
-                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>{item.icon}</span>
-                  {!collapsed && <span>{item.label}</span>}
-                </NavLink>
-              ))}
-            </div>
-          )
-        })}
-      </nav>
+      <Separator className="bg-slate-800" />
 
-      {/* User info + logout */}
-      <div style={{
-        borderTop: '1px solid #1f2937',
-        padding: collapsed ? '0.75rem 0' : '0.75rem 1rem',
-      }}>
+      {/* User footer */}
+      <div className={cn('p-3 shrink-0', collapsed && 'flex justify-center')}>
         {!collapsed && user && (
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#d1d5db', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user.email}
-            </div>
-            <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.1rem' }}>
-              {user.roles.map(r => ROLE_LABEL[r] ?? r).join(', ')}
+          <div className="mb-2 flex items-center gap-2 min-w-0">
+            <Avatar className="h-7 w-7 shrink-0">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                {initials(user.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-200 truncate">{user.email}</p>
+              <p className="text-[10px] text-slate-500 truncate">
+                {user.roles.map(r => ROLE_LABEL[r] ?? r).join(', ')}
+              </p>
             </div>
           </div>
         )}
-        <button
-          onClick={handleLogout}
-          title="Déconnexion"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            width: '100%', background: 'none', border: 'none',
-            cursor: 'pointer', color: '#9ca3af',
-            fontSize: '0.875rem', padding: '0.4rem 0',
-          }}
-        >
-          <span>🚪</span>
-          {!collapsed && <span>Déconnexion</span>}
-        </button>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size={collapsed ? 'icon' : 'sm'}
+                onClick={handleLogout}
+                className={cn(
+                  'text-slate-400 hover:text-white hover:bg-slate-800',
+                  !collapsed && 'w-full justify-start gap-2',
+                )}
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>Déconnexion</span>}
+              </Button>
+            </TooltipTrigger>
+            {collapsed && <TooltipContent side="right">Déconnexion</TooltipContent>}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </aside>
+  )
+}
+
+// ── Topbar ────────────────────────────────────────────────────────────────────
+function Topbar() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
+
+  return (
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/95 backdrop-blur px-4 lg:px-6">
+      {/* Mobile burger */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="lg:hidden">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-56 p-0 bg-slate-900 text-slate-300 border-slate-800">
+          <div className="flex items-center h-14 px-3 border-b border-slate-800">
+            <span className="font-bold text-white text-sm">⚙ Garage System</span>
+          </div>
+          <NavItems onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex-1" />
+
+      {/* User info */}
+      {user && (
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:block text-sm text-muted-foreground">
+            {user.roles.map(r => ROLE_LABEL[r] ?? r).join(', ')}
+          </span>
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+              {initials(user.email)}
+            </AvatarFallback>
+          </Avatar>
+          <Button variant="ghost" size="icon" onClick={handleLogout} title="Déconnexion">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </header>
   )
 }
 
@@ -220,11 +293,14 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f3f4f6' }}>
+    <div className="flex min-h-screen bg-muted/30">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
-      <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
-        <Outlet />
-      </main>
+      <div className="flex flex-1 flex-col min-w-0">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <Outlet />
+        </main>
+      </div>
       <SignalRNotifications />
     </div>
   )
