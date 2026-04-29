@@ -43,6 +43,13 @@ public class ApplicationDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     public DbSet<Prime> Primes => Set<Prime>();
     public DbSet<BulletinPaie> BulletinsPaie => Set<BulletinPaie>();
 
+    // Fleet (Sociétés abonnées)
+    public DbSet<Société> Sociétés => Set<Société>();
+    public DbSet<Contrat> Contrats => Set<Contrat>();
+    public DbSet<VéhiculeSociété> VéhiculesSociété => Set<VéhiculeSociété>();
+    public DbSet<FactureGroupée> FacturesGroupées => Set<FactureGroupée>();
+    public DbSet<LigneFactureGroupée> LignesFactureGroupée => Set<LigneFactureGroupée>();
+
     // Auth
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
@@ -69,11 +76,12 @@ public class ApplicationDbContext : IdentityDbContext<AppUser, AppRole, Guid>
         builder.Entity<Vehicule>().HasIndex(v => v.Immatriculation).IsUnique();
         builder.Entity<OrdreReparation>().HasIndex(o => o.Numéro).IsUnique();
         builder.Entity<BonReception>().HasIndex(b => b.Numéro).IsUnique();
+        builder.Entity<Société>().HasIndex(s => s.NRC).IsUnique();
+        builder.Entity<FactureGroupée>().HasIndex(f => f.Numéro).IsUnique();
 
-        // Concurrence optimiste sur OR
+        // Concurrence optimiste sur OR — xmin est géré automatiquement par PostgreSQL
         builder.Entity<OrdreReparation>()
-            .Property(o => o.RowVersion)
-            .IsRowVersion();
+            .UseXminAsConcurrencyToken();
     }
 
     private static void SetSoftDeleteFilter<T>(ModelBuilder builder) where T : class, ISoftDelete

@@ -19,6 +19,7 @@ public static class ServiceExtensions
         services.AddScoped<PdfService>();
         services.AddScoped<RHService>();
         services.AddScoped<StatsService>();
+        services.AddScoped<FleetService>();
 
         services.AddTransient<StockAlertJob>();
         services.AddTransient<OffresScanJob>();

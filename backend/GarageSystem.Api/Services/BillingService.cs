@@ -214,6 +214,77 @@ public class BillingService(ApplicationDbContext db)
         }
     }
 
+    public async Task<FactureResponseDto> CreateFactureFromORAsync(Guid orId)
+    {
+        var or = await db.OrdresReparation
+            .Include(o => o.Vehicule).ThenInclude(v => v.Client)
+            .Include(o => o.Lignes).ThenInclude(l => l.Article)
+            .FirstOrDefaultAsync(o => o.Id == orId)
+            ?? throw new NotFoundException(nameof(OrdreReparation), orId);
+
+        if (or.Statut != ORStatut.TerminéTechnicien)
+            throw new BusinessRuleException($"L'OR doit être TerminéTechnicien pour générer une facture (actuel : {or.Statut}).");
+
+        if (await db.Factures.AnyAsync(f => f.ORId == orId))
+            throw new ConflictException("Une facture existe déjà pour cet OR.");
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var numéro = await GenerateFactureNuméroAsync();
+            var client = or.Vehicule.Client;
+
+            var lignes = or.Lignes.Select(l => new LigneFacture
+            {
+                Description    = l.Type == LigneORType.Pièce && l.Article is not null
+                                 ? $"[{l.Article.Référence}] {l.Description}"
+                                 : l.Description,
+                Quantité       = l.Quantité,
+                PrixUnitaireHT = l.PrixUnitaire,
+                TauxTVA        = TauxTVA,
+            }).ToList();
+
+            var sousTotalHT = lignes.Sum(l => l.Quantité * l.PrixUnitaireHT);
+            var montantTVA  = Math.Round(sousTotalHT * TauxTVA / 100, 2);
+            var totalTTC    = sousTotalHT + montantTVA;
+
+            var facture = new Facture
+            {
+                Numéro        = numéro,
+                ORId          = or.Id,
+                ClientNom     = client.Type == ClientType.Société
+                                ? client.RaisonSociale ?? client.Nom
+                                : $"{client.Nom} {client.Prénom}".Trim(),
+                ClientAdresse = client.Adresse,
+                ClientNIF     = client.NIF,
+                DateFacture   = DateTime.UtcNow,
+                DateEchéance  = DateTime.UtcNow.AddDays(30),
+                SousTotalHT   = sousTotalHT,
+                MontantTVA    = montantTVA,
+                TotalTTC      = totalTTC,
+                Statut        = FactureStatut.Émise,
+                Lignes        = lignes,
+            };
+
+            db.Factures.Add(facture);
+            await db.SaveChangesAsync();
+
+            or.FactureId     = facture.Id;
+            or.Statut        = ORStatut.Livré;
+            or.DateFermeture = DateTime.UtcNow;
+            or.Vehicule.DateDernièreVisite = DateTime.UtcNow;
+
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+            return await GetFactureAsync(facture.Id);
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    }
+
     public async Task<FactureResponseDto> GetFactureAsync(Guid id)
     {
         var f = await db.Factures

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Wrench, PlusCircle, Users, Car, Mail,
   FileText, Receipt, Wallet, Package, PackageSearch, AlertTriangle,
   UserCircle, Clock, UmbrellaOff, DollarSign, BarChart2, Settings,
-  LogOut, Menu,
+  LogOut, Menu, Building2,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { SignalRNotifications } from '@/components/layout/SignalRNotifications'
@@ -45,6 +45,7 @@ const NAV: NavGroup[] = [
       { label: 'Clients',          to: '/clients',              icon: Users },
       { label: 'Véhicules',        to: '/vehicules',            icon: Car },
       { label: 'Offres entretien', to: '/offres',               icon: Mail },
+      { label: 'Sociétés abonnées', to: '/fleet',              icon: Building2 },
     ],
   },
   {

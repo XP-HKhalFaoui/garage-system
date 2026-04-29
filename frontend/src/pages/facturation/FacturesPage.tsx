@@ -228,9 +228,12 @@ export function FacturesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <a href={factureService.getPdfUrl(f.id)} target="_blank" rel="noreferrer">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="PDF"><FileText className="h-3.5 w-3.5" /></Button>
-                    </a>
+                    <Button
+                      variant="ghost" size="icon" className="h-7 w-7" title="Télécharger PDF"
+                      onClick={() => factureService.downloadPdf(f.id, f.numéro)}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                    </Button>
                     {(f.statut === 'Émise' || f.statut === 'PartiellemntPayée') && (
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" title="Paiement" onClick={() => setPaiementModal(f)}>
                         <CreditCard className="h-3.5 w-3.5" />

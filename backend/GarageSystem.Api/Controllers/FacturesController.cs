@@ -32,6 +32,13 @@ public class FacturesController(BillingService svc, PdfService pdf) : Controller
     public async Task<IActionResult> GetById(Guid id)
         => Ok(await svc.GetFactureAsync(id));
 
+    [HttpPost("depuis-or/{orId:guid}")]
+    public async Task<IActionResult> CreateFromOR(Guid orId)
+    {
+        var result = await svc.CreateFactureFromORAsync(orId);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
     [HttpPost("depuis-devis/{devisId:guid}")]
     public async Task<IActionResult> CreateFromDevis(Guid devisId)
     {

@@ -9,7 +9,7 @@ export const orService = {
     httpClient.get<StatsToday>('/ordres-reparation/stats-today').then(r => r.data),
 
   getById: (id: string) =>
-    httpClient.get(`/ordres-reparation/${id}`).then(r => r.data),
+    httpClient.get<import('@/types/or').ORDetail>(`/ordres-reparation/${id}`).then(r => r.data),
 
   create: (dto: {
     vehiculeId: string

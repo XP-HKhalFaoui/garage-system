@@ -6,6 +6,7 @@ import { DashboardPage }   from '@/pages/DashboardPage'
 import { Page403 }         from '@/pages/Page403'
 import { KanbanPage }      from '@/pages/or/KanbanPage'
 import { CreateORPage }    from '@/pages/or/CreateORPage'
+import ORDetailPage        from '@/pages/or/ORDetailPage'
 import { ArticlesPage }    from '@/pages/stock/ArticlesPage'
 import { AlertesStockPage } from '@/pages/stock/AlertesStockPage'
 import VehiculeDetailPage  from '@/pages/vehicules/VehiculeDetailPage'
@@ -23,6 +24,8 @@ import { OffresPage }      from '@/pages/OffresPage'
 import { PortailClientPage } from '@/pages/PortailClientPage'
 import { BonsReceptionPage } from '@/pages/stock/BonsReceptionPage'
 import { ParametresPage }    from '@/pages/ParametresPage'
+import SociétésPage          from '@/pages/fleet/SociétésPage'
+import SociétéDetailPage     from '@/pages/fleet/SociétéDetailPage'
 
 export default function App() {
   return (
@@ -40,6 +43,7 @@ export default function App() {
           <Route path="/dashboard"      element={<DashboardPage />} />
           <Route path="/or/kanban"      element={<KanbanPage />} />
           <Route path="/or/nouveau"     element={<CreateORPage />} />
+          <Route path="/or/:id"         element={<ORDetailPage />} />
           <Route path="/stock/articles"       element={<ArticlesPage />} />
           <Route path="/stock/bons-reception" element={<BonsReceptionPage />} />
           <Route path="/stock/alertes"        element={<AlertesStockPage />} />
@@ -47,6 +51,8 @@ export default function App() {
           <Route path="/vehicules"      element={<VéhiculesPage />} />
           <Route path="/vehicules/:id"  element={<VehiculeDetailPage />} />
           <Route path="/offres"         element={<OffresPage />} />
+          <Route path="/fleet"          element={<SociétésPage />} />
+          <Route path="/fleet/:id"      element={<SociétéDetailPage />} />
 
           {/* Caissier + Admin */}
           <Route element={<PrivateRoute allowedRoles={['Caissier']} />}>

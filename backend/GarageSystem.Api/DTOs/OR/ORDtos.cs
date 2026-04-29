@@ -66,3 +66,30 @@ public record LigneORResponseDto(
     decimal PrixUnitaire,
     decimal TotalHT
 );
+
+public record HistoriqueStatutDto(
+    Guid Id,
+    ORStatut StatutAvant,
+    ORStatut StatutAprès,
+    string? Commentaire,
+    DateTime Timestamp
+);
+
+public record ORDetailDto(
+    Guid Id,
+    string Numéro,
+    ORStatut Statut,
+    ORPriorité Priorité,
+    TypeIntervention TypeIntervention,
+    DateTime DateOuverture,
+    DateTime? DateFermeture,
+    DateTime? HeureDebut,
+    string? Diagnostic,
+    decimal MontantTotal,
+    Guid? FactureId,
+    VehiculeInfoDto Vehicule,
+    ClientInfoDto Client,
+    TechnicienInfoDto? Technicien,
+    List<LigneORResponseDto> Lignes,
+    List<HistoriqueStatutDto> Historique
+);

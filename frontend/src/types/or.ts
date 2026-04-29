@@ -65,3 +65,30 @@ export interface LigneOR {
   prixUnitaire: number
   totalHT: number
 }
+
+export interface HistoriqueStatut {
+  id: string
+  statutAvant: ORStatut
+  statutAprès: ORStatut
+  commentaire: string | null
+  timestamp: string
+}
+
+export interface ORDetail {
+  id: string
+  numéro: string
+  statut: ORStatut
+  priorité: ORPriorité
+  typeIntervention: TypeIntervention
+  dateOuverture: string
+  dateFermeture: string | null
+  heureDebut: string | null
+  diagnostic: string | null
+  montantTotal: number
+  factureId: string | null
+  vehicule: VehiculeInfo
+  client: ClientInfo
+  technicien: TechnicienInfo | null
+  lignes: LigneOR[]
+  historique: HistoriqueStatut[]
+}

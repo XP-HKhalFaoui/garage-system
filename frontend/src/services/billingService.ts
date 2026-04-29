@@ -1,4 +1,14 @@
 import http from './httpClient'
+
+async function downloadBlob(url: string, filename: string) {
+  const res = await http.get(url, { responseType: 'blob' })
+  const blobUrl = URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(blobUrl)
+}
 import type {
   DevisResponse,
   DevisStatut,
@@ -34,7 +44,7 @@ export const devisService = {
   refuser: (id: string, motif: string) =>
     http.patch<DevisResponse>(`/devis/${id}/refuser`, { motif }).then(r => r.data),
 
-  getPdfUrl: (id: string) => `/api/devis/${id}/pdf`,
+  downloadPdf: (id: string, numéro: string) => downloadBlob(`/devis/${id}/pdf`, `${numéro}.pdf`),
 }
 
 // ── Factures ──────────────────────────────────────────────────────────────────
@@ -59,6 +69,9 @@ export const factureService = {
   getById: (id: string) =>
     http.get<FactureResponse>(`/factures/${id}`).then(r => r.data),
 
+  createFromOR: (orId: string) =>
+    http.post<FactureResponse>(`/factures/depuis-or/${orId}`).then(r => r.data),
+
   createFromDevis: (devisId: string) =>
     http.post<FactureResponse>(`/factures/depuis-devis/${devisId}`).then(r => r.data),
 
@@ -71,7 +84,7 @@ export const factureService = {
   annuler: (id: string, motif: string) =>
     http.patch(`/factures/${id}/annuler`, { motif }),
 
-  getPdfUrl: (id: string) => `/api/factures/${id}/pdf`,
+  downloadPdf: (id: string, numéro: string) => downloadBlob(`/factures/${id}/pdf`, `${numéro}.pdf`),
 }
 
 // ── Caisse ────────────────────────────────────────────────────────────────────

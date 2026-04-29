@@ -20,6 +20,8 @@ public enum TypeJour { Travaillé, Congé, Maladie, Maternité, Férié, Weekend
 public enum TypeConge { Annuel, Maladie, Maternité, Événementiel, SansRetenue }
 public enum CongeStatut { EnAttente, Approuvé, Refusé }
 public enum AlerteStatut { Active, Résolue }
+public enum TypeTarif { TarifNormal, PrixRéduit, Forfait }
+public enum FactureGroupéeStatut { Émise, Soldée, Annulée }
 public enum Wilaya
 {
     Adrar = 1, Chlef, Laghouat, OumElBouaghi, Batna, Béjaïa, Biskra, Béchar,

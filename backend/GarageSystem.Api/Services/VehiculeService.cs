@@ -227,6 +227,7 @@ public class VehiculeService(ApplicationDbContext db, MoteurOffresService moteur
                 v.Marque,
                 v.Modele,
                 v.Année,
+                v.KilométrageActuel,
                 v.Client.Nom + (v.Client.Prénom != null ? " " + v.Client.Prénom : ""),
                 v.Client.Téléphone))
             .ToListAsync();

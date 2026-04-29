@@ -1,4 +1,5 @@
 import { Phone, Zap } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { ORSummary } from '@/types/or'
 import { ORTimer } from './ORTimer'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -18,14 +19,15 @@ function techInitials(prénom: string, nom: string) {
 }
 
 export function ORCard({ or, onClick, onAssigner }: Props) {
+  const navigate = useNavigate()
   const isUrgentWaiting = or.priorité === 'Urgent' && or.statut === 'EnAttente'
+  const handleClick = onClick ?? (() => navigate(`/or/${or.id}`))
 
   return (
     <Card
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
-        'shadow-sm transition-shadow hover:shadow-md',
-        onClick && 'cursor-pointer',
+        'shadow-sm transition-shadow hover:shadow-md cursor-pointer',
         isUrgentWaiting && 'border-red-400 dark:border-red-600',
       )}
     >

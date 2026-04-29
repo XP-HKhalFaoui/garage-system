@@ -20,7 +20,6 @@ public class OrdreReparation : BaseEntity
     public decimal MontantTotal { get; set; }
     public Guid? FactureId { get; set; }
     public Guid? FactureGroupéeId { get; set; }
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     public ICollection<LigneOR> Lignes { get; set; } = new List<LigneOR>();
     public ICollection<HistoriqueStatutOR> HistoriqueStatuts { get; set; } = new List<HistoriqueStatutOR>();

@@ -123,6 +123,7 @@ public record VehiculeSearchResultDto(
     string Marque,
     string Modele,
     int Annee,
+    decimal KilométrageActuel,
     string ClientNom,
     string ClientTéléphone);
 

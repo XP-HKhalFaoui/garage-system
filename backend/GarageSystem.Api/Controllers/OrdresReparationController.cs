@@ -45,7 +45,31 @@ public class OrdresReparationController : ControllerBase
             .AsNoTracking()
             .FirstOrDefaultAsync(o => o.Id == id);
 
-        return or is null ? NotFound() : Ok(or);
+        if (or is null) return NotFound();
+
+        var dto = new ORDetailDto(
+            or.Id, or.Numéro, or.Statut, or.Priorité, or.TypeIntervention,
+            or.DateOuverture, or.DateFermeture, or.HeureDebut, or.Diagnostic, or.MontantTotal,
+            or.FactureId,
+            new VehiculeInfoDto(or.Vehicule.Id, or.Vehicule.Immatriculation,
+                or.Vehicule.Marque, or.Vehicule.Modele, or.Vehicule.KilométrageActuel),
+            new ClientInfoDto(or.Vehicule.Client.Id, or.Vehicule.Client.Nom, or.Vehicule.Client.Téléphone),
+            or.Technicien is null ? null :
+                new TechnicienInfoDto(or.Technicien.Id, or.Technicien.Nom, or.Technicien.Prénom),
+            or.Lignes
+                .OrderBy(l => l.DateCreation)
+                .Select(l => new LigneORResponseDto(
+                    l.Id, l.Type, l.ArticleId,
+                    l.Article?.Référence,
+                    l.Description, l.Quantité, l.PrixUnitaire, l.Quantité * l.PrixUnitaire))
+                .ToList(),
+            or.HistoriqueStatuts
+                .OrderBy(h => h.Timestamp)
+                .Select(h => new HistoriqueStatutDto(h.Id, h.StatutAvant, h.StatutAprès, h.Commentaire, h.Timestamp))
+                .ToList()
+        );
+
+        return Ok(dto);
     }
 
     // GET /api/ordres-reparation/today

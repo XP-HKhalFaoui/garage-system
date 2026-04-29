@@ -115,9 +115,9 @@ function DevisDetailModal({ devis, onClose }: { devis: DevisResponse; onClose: (
         )}
 
         <div className="flex gap-2 flex-wrap justify-end pt-1">
-          <a href={devisService.getPdfUrl(devis.id)} target="_blank" rel="noreferrer">
-            <Button variant="outline" size="sm"><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
-          </a>
+          <Button variant="outline" size="sm" onClick={() => devisService.downloadPdf(devis.id, devis.numéro)}>
+            <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
+          </Button>
 
           {devis.statut === 'Brouillon' && (
             <Button size="sm" onClick={() => mutValider.mutate()} disabled={mutValider.isPending}>
@@ -234,9 +234,12 @@ export function DevisPage() {
                     </Badge>
                   </TableCell>
                   <TableCell onClick={e => e.stopPropagation()}>
-                    <a href={devisService.getPdfUrl(d.id)} target="_blank" rel="noreferrer">
-                      <Button variant="ghost" size="icon" className="h-7 w-7"><FileText className="h-3.5 w-3.5" /></Button>
-                    </a>
+                    <Button
+                      variant="ghost" size="icon" className="h-7 w-7" title="Télécharger PDF"
+                      onClick={() => devisService.downloadPdf(d.id, d.numéro)}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               )
