@@ -199,42 +199,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       <Separator className="bg-slate-800" />
 
       {/* User footer */}
-      <div className={cn('p-3 shrink-0', collapsed && 'flex justify-center')}>
-        {!collapsed && user && (
-          <div className="mb-2 flex items-center gap-2 min-w-0">
-            <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {initials(user.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-200 truncate">{user.email}</p>
-              <p className="text-[10px] text-slate-500 truncate">
-                {user.roles.map(r => ROLE_LABEL[r] ?? r).join(', ')}
-              </p>
-            </div>
-          </div>
-        )}
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size={collapsed ? 'icon' : 'sm'}
-                onClick={handleLogout}
-                className={cn(
-                  'text-slate-400 hover:text-white hover:bg-slate-800',
-                  !collapsed && 'w-full justify-start gap-2',
-                )}
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>Déconnexion</span>}
-              </Button>
-            </TooltipTrigger>
-            {collapsed && <TooltipContent side="right">Déconnexion</TooltipContent>}
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+
     </aside>
   )
 }

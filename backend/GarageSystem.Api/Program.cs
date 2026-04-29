@@ -13,6 +13,10 @@ using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
 using Serilog;
 
+
+//// Treat DateTime with Kind=Unspecified as UTC globally (Npgsql 6+)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);

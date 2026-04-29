@@ -6,4 +6,5 @@ public class AppUser : IdentityUser<Guid>
 {
     public Guid? EmployeId { get; set; }
     public bool IsActif { get; set; } = true;
+    public string Nom { get; set; } = string.Empty;
 }

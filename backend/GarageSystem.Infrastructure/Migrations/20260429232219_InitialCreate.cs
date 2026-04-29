@@ -32,12 +32,12 @@ namespace GarageSystem.Infrastructure.Migrations
                     emplacement_rayonnage = table.Column<string>(type: "text", nullable: true),
                     code_barre = table.Column<string>(type: "text", nullable: true),
                     is_actif = table.Column<bool>(type: "boolean", nullable: false),
-                    date_dernier_mouvement = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    date_dernière_commande = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_dernier_mouvement = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    date_dernière_commande = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
-                    date_suppression = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_suppression = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -65,6 +65,7 @@ namespace GarageSystem.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     employe_id = table.Column<Guid>(type: "uuid", nullable: true),
                     is_actif = table.Column<bool>(type: "boolean", nullable: false),
+                    nom = table.Column<string>(type: "text", nullable: false),
                     user_name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     normalized_user_name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -93,12 +94,12 @@ namespace GarageSystem.Infrastructure.Migrations
                     numéro = table.Column<string>(type: "text", nullable: false),
                     fournisseur = table.Column<string>(type: "text", nullable: false),
                     référence_fournisseur = table.Column<string>(type: "text", nullable: true),
-                    date_reception = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    date_reception = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     notes = table.Column<string>(type: "text", nullable: true),
                     montant_total = table.Column<decimal>(type: "numeric", nullable: false),
                     user_id = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -119,15 +120,15 @@ namespace GarageSystem.Infrastructure.Migrations
                     email = table.Column<string>(type: "text", nullable: true),
                     adresse = table.Column<string>(type: "text", nullable: false),
                     wilaya = table.Column<int>(type: "integer", nullable: false),
-                    date_naissance = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_naissance = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     nrc = table.Column<string>(type: "text", nullable: true),
                     nif = table.Column<string>(type: "text", nullable: true),
                     is_actif = table.Column<bool>(type: "boolean", nullable: false),
                     portail_token = table.Column<Guid>(type: "uuid", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
-                    date_suppression = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_suppression = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -143,14 +144,14 @@ namespace GarageSystem.Infrastructure.Migrations
                     or_id = table.Column<Guid>(type: "uuid", nullable: false),
                     client_id = table.Column<Guid>(type: "uuid", nullable: false),
                     statut = table.Column<int>(type: "integer", nullable: false),
-                    date_expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_envoi = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_expiration = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_envoi = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     motif_refus = table.Column<string>(type: "text", nullable: true),
                     sous_total_ht = table.Column<decimal>(type: "numeric", nullable: false),
                     montant_tva = table.Column<decimal>(type: "numeric", nullable: false),
                     total_ttc = table.Column<decimal>(type: "numeric", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -164,7 +165,7 @@ namespace GarageSystem.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     nom = table.Column<string>(type: "text", nullable: false),
                     prénom = table.Column<string>(type: "text", nullable: false),
-                    date_naissance = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    date_naissance = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     téléphone = table.Column<string>(type: "text", nullable: false),
                     email = table.Column<string>(type: "text", nullable: true),
                     adresse = table.Column<string>(type: "text", nullable: false),
@@ -172,15 +173,15 @@ namespace GarageSystem.Infrastructure.Migrations
                     département = table.Column<string>(type: "text", nullable: true),
                     salaire_base = table.Column<decimal>(type: "numeric", nullable: false),
                     type_contrat = table.Column<int>(type: "integer", nullable: false),
-                    date_embauche = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_fin_contrat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_embauche = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_fin_contrat = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     numéro_sécurité_sociale = table.Column<string>(type: "text", nullable: true),
                     user_id = table.Column<string>(type: "text", nullable: true),
                     is_actif = table.Column<bool>(type: "boolean", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
-                    date_suppression = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_suppression = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -198,17 +199,17 @@ namespace GarageSystem.Infrastructure.Migrations
                     client_nom = table.Column<string>(type: "text", nullable: false),
                     client_adresse = table.Column<string>(type: "text", nullable: false),
                     client_nif = table.Column<string>(type: "text", nullable: true),
-                    date_facture = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_echéance = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_solde = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_facture = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_echéance = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_solde = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     sous_total_ht = table.Column<decimal>(type: "numeric", nullable: false),
                     montant_tva = table.Column<decimal>(type: "numeric", nullable: false),
                     total_ttc = table.Column<decimal>(type: "numeric", nullable: false),
                     montant_déjà_payé = table.Column<decimal>(type: "numeric", nullable: false),
                     statut = table.Column<int>(type: "integer", nullable: false),
                     motifs_annulation = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -226,8 +227,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     is_read = table.Column<bool>(type: "boolean", nullable: false),
                     user_id = table.Column<string>(type: "text", nullable: true),
                     action_url = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -241,15 +242,37 @@ namespace GarageSystem.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     token = table.Column<string>(type: "text", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    expiration = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     is_revoked = table.Column<bool>(type: "boolean", nullable: false),
                     replaced_by_token = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_refresh_token", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "société",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    raison_sociale = table.Column<string>(type: "text", nullable: false),
+                    nrc = table.Column<string>(type: "text", nullable: false),
+                    nif = table.Column<string>(type: "text", nullable: false),
+                    adresse_siège = table.Column<string>(type: "text", nullable: false),
+                    téléphone_resp_achats = table.Column<string>(type: "text", nullable: false),
+                    email_facturation = table.Column<string>(type: "text", nullable: false),
+                    is_actif = table.Column<bool>(type: "boolean", nullable: false),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    is_deleted = table.Column<bool>(type: "boolean", nullable: false),
+                    date_suppression = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_société", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -260,12 +283,12 @@ namespace GarageSystem.Infrastructure.Migrations
                     article_id = table.Column<Guid>(type: "uuid", nullable: false),
                     stock_actuel = table.Column<decimal>(type: "numeric", nullable: false),
                     stock_minimum = table.Column<decimal>(type: "numeric", nullable: false),
-                    date_detection = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    date_detection = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     statut = table.Column<string>(type: "text", nullable: false),
                     commentaire = table.Column<string>(type: "text", nullable: true),
-                    date_resolution = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_resolution = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -292,8 +315,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     référence_document = table.Column<string>(type: "text", nullable: true),
                     motif = table.Column<string>(type: "text", nullable: true),
                     user_id = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -422,8 +445,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     quantite_recue = table.Column<decimal>(type: "numeric", nullable: false),
                     prix_unitaire_achat = table.Column<decimal>(type: "numeric", nullable: false),
                     numéro_lot = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -460,12 +483,12 @@ namespace GarageSystem.Infrastructure.Migrations
                     couleur = table.Column<string>(type: "text", nullable: true),
                     kilométrage_actuel = table.Column<decimal>(type: "numeric", nullable: false),
                     kilométrage_dernière_visite = table.Column<decimal>(type: "numeric", nullable: false),
-                    date_dernière_visite = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_dernière_visite = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     is_actif = table.Column<bool>(type: "boolean", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false),
-                    date_suppression = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_suppression = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -488,8 +511,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     quantité = table.Column<decimal>(type: "numeric", nullable: false),
                     prix_unitaire_ht = table.Column<decimal>(type: "numeric", nullable: false),
                     taux_tva = table.Column<decimal>(type: "numeric", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -522,10 +545,10 @@ namespace GarageSystem.Infrastructure.Migrations
                     total_cotisations = table.Column<decimal>(type: "numeric", nullable: false),
                     salaire_net = table.Column<decimal>(type: "numeric", nullable: false),
                     statut = table.Column<string>(type: "text", nullable: false),
-                    date_paiement = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_paiement = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     mode_paiement = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -551,10 +574,10 @@ namespace GarageSystem.Infrastructure.Migrations
                     motif = table.Column<string>(type: "text", nullable: false),
                     statut = table.Column<int>(type: "integer", nullable: false),
                     approbateur_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    date_decision = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_decision = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     commentaire_decision = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -580,8 +603,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     nb_heures_travaillées = table.Column<decimal>(type: "numeric", nullable: false),
                     nb_heures_sup = table.Column<decimal>(type: "numeric", nullable: false),
                     notes = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -604,8 +627,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     type = table.Column<string>(type: "text", nullable: false),
                     montant = table.Column<decimal>(type: "numeric", nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -627,8 +650,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     année = table.Column<int>(type: "integer", nullable: false),
                     annuel_total = table.Column<int>(type: "integer", nullable: false),
                     annuel_pris = table.Column<int>(type: "integer", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -651,8 +674,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     quantité = table.Column<decimal>(type: "numeric", nullable: false),
                     prix_unitaire_ht = table.Column<decimal>(type: "numeric", nullable: false),
                     taux_tva = table.Column<decimal>(type: "numeric", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -674,10 +697,10 @@ namespace GarageSystem.Infrastructure.Migrations
                     montant = table.Column<decimal>(type: "numeric", nullable: false),
                     mode_paiement = table.Column<int>(type: "integer", nullable: false),
                     référence = table.Column<string>(type: "text", nullable: true),
-                    date_paiement = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    date_paiement = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     user_id = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -691,6 +714,66 @@ namespace GarageSystem.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "contrat",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    société_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    date_début = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_fin = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    type_tarif = table.Column<int>(type: "integer", nullable: false),
+                    plafond_mensuel_dzd = table.Column<decimal>(type: "numeric", nullable: true),
+                    remise_pourcentage = table.Column<decimal>(type: "numeric", nullable: true),
+                    conditions_particulières = table.Column<string>(type: "text", nullable: true),
+                    is_actif = table.Column<bool>(type: "boolean", nullable: false),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_contrat", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_contrat_société_société_id",
+                        column: x => x.société_id,
+                        principalTable: "société",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "facture_groupée",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    numéro = table.Column<string>(type: "text", nullable: false),
+                    société_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    société_raison_sociale = table.Column<string>(type: "text", nullable: false),
+                    société_nif = table.Column<string>(type: "text", nullable: false),
+                    société_adresse = table.Column<string>(type: "text", nullable: false),
+                    période_mois = table.Column<int>(type: "integer", nullable: false),
+                    période_année = table.Column<int>(type: "integer", nullable: false),
+                    sous_total_ht = table.Column<decimal>(type: "numeric", nullable: false),
+                    montant_tva = table.Column<decimal>(type: "numeric", nullable: false),
+                    total_ttc = table.Column<decimal>(type: "numeric", nullable: false),
+                    dépassement_plafond = table.Column<bool>(type: "boolean", nullable: false),
+                    statut = table.Column<int>(type: "integer", nullable: false),
+                    date_facture = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    motifs_annulation = table.Column<string>(type: "text", nullable: true),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_facture_groupée", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_facture_groupée_société_société_id",
+                        column: x => x.société_id,
+                        principalTable: "société",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "offre_envoyee",
                 columns: table => new
                 {
@@ -698,12 +781,12 @@ namespace GarageSystem.Infrastructure.Migrations
                     vehicule_id = table.Column<Guid>(type: "uuid", nullable: false),
                     types = table.Column<string>(type: "text", nullable: false),
                     canal = table.Column<string>(type: "text", nullable: false),
-                    date_envoi = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    date_envoi = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     statut = table.Column<string>(type: "text", nullable: false),
                     message_envoyé = table.Column<string>(type: "text", nullable: true),
                     user_id = table.Column<string>(type: "text", nullable: true),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -727,16 +810,16 @@ namespace GarageSystem.Infrastructure.Migrations
                     statut = table.Column<int>(type: "integer", nullable: false),
                     priorité = table.Column<int>(type: "integer", nullable: false),
                     type_intervention = table.Column<int>(type: "integer", nullable: false),
-                    date_ouverture = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_fermeture = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    heure_debut = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    date_ouverture = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_fermeture = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    heure_debut = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     diagnostic = table.Column<string>(type: "text", nullable: true),
                     montant_total = table.Column<decimal>(type: "numeric", nullable: false),
                     facture_id = table.Column<Guid>(type: "uuid", nullable: true),
                     facture_groupée_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    row_version = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -755,6 +838,38 @@ namespace GarageSystem.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "véhicule_société",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    société_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    véhicule_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    numéro_flotte = table.Column<string>(type: "text", nullable: true),
+                    conducteur_habituel = table.Column<string>(type: "text", nullable: true),
+                    date_affectation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_retrait = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    is_actif = table.Column<bool>(type: "boolean", nullable: false),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_véhicule_société", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_véhicule_société_société_société_id",
+                        column: x => x.société_id,
+                        principalTable: "société",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_véhicule_société_vehicule_véhicule_id",
+                        column: x => x.véhicule_id,
+                        principalTable: "vehicule",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "historique_statut_or",
                 columns: table => new
                 {
@@ -764,15 +879,50 @@ namespace GarageSystem.Infrastructure.Migrations
                     statut_après = table.Column<int>(type: "integer", nullable: false),
                     commentaire = table.Column<string>(type: "text", nullable: true),
                     user_id = table.Column<string>(type: "text", nullable: true),
-                    timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_historique_statut_or", x => x.id);
                     table.ForeignKey(
                         name: "fk_historique_statut_or_ordre_reparation_or_id",
+                        column: x => x.or_id,
+                        principalTable: "ordre_reparation",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ligne_facture_groupée",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    facture_groupée_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    or_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    immatriculation = table.Column<string>(type: "text", nullable: false),
+                    numéro_flotte = table.Column<string>(type: "text", nullable: true),
+                    type_intervention = table.Column<string>(type: "text", nullable: false),
+                    date_or = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    montant_ht = table.Column<decimal>(type: "numeric", nullable: false),
+                    taux_tva = table.Column<decimal>(type: "numeric", nullable: false),
+                    total_ttc = table.Column<decimal>(type: "numeric", nullable: false),
+                    tarif_appliqué = table.Column<bool>(type: "boolean", nullable: false),
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_ligne_facture_groupée", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_ligne_facture_groupée_facture_groupée_facture_groupée_id",
+                        column: x => x.facture_groupée_id,
+                        principalTable: "facture_groupée",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_ligne_facture_groupée_ordre_reparation_or_id",
                         column: x => x.or_id,
                         principalTable: "ordre_reparation",
                         principalColumn: "id",
@@ -790,8 +940,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     description = table.Column<string>(type: "text", nullable: false),
                     quantité = table.Column<decimal>(type: "numeric", nullable: false),
                     prix_unitaire = table.Column<decimal>(type: "numeric", nullable: false),
-                    date_creation = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_modification = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    date_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    date_modification = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -875,9 +1025,25 @@ namespace GarageSystem.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_contrat_société_id",
+                table: "contrat",
+                column: "société_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_demande_conge_employe_id",
                 table: "demande_conge",
                 column: "employe_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_facture_groupée_numéro",
+                table: "facture_groupée",
+                column: "numéro",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_facture_groupée_société_id",
+                table: "facture_groupée",
+                column: "société_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_historique_statut_or_or_id",
@@ -903,6 +1069,16 @@ namespace GarageSystem.Infrastructure.Migrations
                 name: "ix_ligne_facture_facture_id",
                 table: "ligne_facture",
                 column: "facture_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ligne_facture_groupée_facture_groupée_id",
+                table: "ligne_facture_groupée",
+                column: "facture_groupée_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ligne_facture_groupée_or_id",
+                table: "ligne_facture_groupée",
+                column: "or_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_ligne_or_article_id",
@@ -956,6 +1132,12 @@ namespace GarageSystem.Infrastructure.Migrations
                 column: "employe_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_société_nrc",
+                table: "société",
+                column: "nrc",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_solde_conge_employe_id",
                 table: "solde_conge",
                 column: "employe_id");
@@ -970,6 +1152,16 @@ namespace GarageSystem.Infrastructure.Migrations
                 table: "vehicule",
                 column: "immatriculation",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_véhicule_société_société_id",
+                table: "véhicule_société",
+                column: "société_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_véhicule_société_véhicule_id",
+                table: "véhicule_société",
+                column: "véhicule_id");
         }
 
         /// <inheritdoc />
@@ -997,6 +1189,9 @@ namespace GarageSystem.Infrastructure.Migrations
                 name: "bulletin_paie");
 
             migrationBuilder.DropTable(
+                name: "contrat");
+
+            migrationBuilder.DropTable(
                 name: "demande_conge");
 
             migrationBuilder.DropTable(
@@ -1010,6 +1205,9 @@ namespace GarageSystem.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ligne_facture");
+
+            migrationBuilder.DropTable(
+                name: "ligne_facture_groupée");
 
             migrationBuilder.DropTable(
                 name: "ligne_or");
@@ -1039,6 +1237,9 @@ namespace GarageSystem.Infrastructure.Migrations
                 name: "solde_conge");
 
             migrationBuilder.DropTable(
+                name: "véhicule_société");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -1051,6 +1252,9 @@ namespace GarageSystem.Infrastructure.Migrations
                 name: "devis");
 
             migrationBuilder.DropTable(
+                name: "facture_groupée");
+
+            migrationBuilder.DropTable(
                 name: "ordre_reparation");
 
             migrationBuilder.DropTable(
@@ -1058,6 +1262,9 @@ namespace GarageSystem.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "facture");
+
+            migrationBuilder.DropTable(
+                name: "société");
 
             migrationBuilder.DropTable(
                 name: "employe");

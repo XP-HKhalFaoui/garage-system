@@ -38,19 +38,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("commentaire");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime>("DateDetection")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_detection");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateResolution")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_resolution");
 
                     b.Property<string>("Statut")
@@ -91,23 +91,23 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("code_barre");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateDernierMouvement")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_dernier_mouvement");
 
                     b.Property<DateTime?>("DateDernièreCommande")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_dernière_commande");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateSuppression")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_suppression");
 
                     b.Property<string>("Description")
@@ -186,15 +186,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime>("DateReception")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_reception");
 
                     b.Property<string>("Fournisseur")
@@ -249,15 +249,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("cotisation_retraite");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DatePaiement")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_paiement");
 
                     b.Property<Guid>("EmployeId")
@@ -340,19 +340,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("adresse");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateNaissance")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_naissance");
 
                     b.Property<DateTime?>("DateSuppression")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_suppression");
 
                     b.Property<string>("Email")
@@ -431,19 +431,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("conditions_particulières");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime>("DateDébut")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_début");
 
                     b.Property<DateTime?>("DateFin")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_fin");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<bool>("IsActif")
@@ -491,11 +491,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("commentaire_decision");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateDecision")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_decision");
 
                     b.Property<DateOnly>("DateDébut")
@@ -507,7 +507,7 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("date_fin");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<Guid>("EmployeId")
@@ -552,19 +552,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("client_id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateEnvoi")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_envoi");
 
                     b.Property<DateTime>("DateExpiration")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_expiration");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<decimal>("MontantTVA")
@@ -615,27 +615,27 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("adresse");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime>("DateEmbauche")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_embauche");
 
                     b.Property<DateTime?>("DateFinContrat")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_fin_contrat");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime>("DateNaissance")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_naissance");
 
                     b.Property<DateTime?>("DateSuppression")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_suppression");
 
                     b.Property<string>("Département")
@@ -717,23 +717,23 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("client_nom");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime>("DateEchéance")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_echéance");
 
                     b.Property<DateTime>("DateFacture")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_facture");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateSolde")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_solde");
 
                     b.Property<Guid?>("DevisId")
@@ -787,15 +787,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime>("DateFacture")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_facture");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<bool>("DépassementPlafond")
@@ -879,11 +879,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("commentaire");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<Guid>("ORId")
@@ -899,7 +899,7 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("statut_avant");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("timestamp");
 
                     b.Property<string>("UserId")
@@ -931,11 +931,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("bon_reception_id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("NuméroLot")
@@ -970,11 +970,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("Description")
@@ -1015,11 +1015,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("Description")
@@ -1060,15 +1060,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime>("DateOR")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_or");
 
                     b.Property<Guid>("FactureGroupéeId")
@@ -1133,11 +1133,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("article_id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("Description")
@@ -1185,11 +1185,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("article_id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("Motif")
@@ -1245,11 +1245,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("action_url");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<bool>("IsRead")
@@ -1294,15 +1294,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("canal");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime>("DateEnvoi")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_envoi");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("MessageEnvoyé")
@@ -1344,19 +1344,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateFermeture")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_fermeture");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime>("DateOuverture")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_ouverture");
 
                     b.Property<string>("Diagnostic")
@@ -1372,7 +1372,7 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("facture_id");
 
                     b.Property<DateTime?>("HeureDebut")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("heure_debut");
 
                     b.Property<decimal>("MontantTotal")
@@ -1434,15 +1434,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime>("DatePaiement")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_paiement");
 
                     b.Property<Guid>("FactureId")
@@ -1486,11 +1486,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("date");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<Guid>("EmployeId")
@@ -1538,11 +1538,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<string>("Description")
@@ -1589,15 +1589,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("adresse_siège");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateSuppression")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_suppression");
 
                     b.Property<string>("EmailFacturation")
@@ -1663,11 +1663,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("année");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<Guid>("EmployeId")
@@ -1711,19 +1711,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("cylindrée");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateDernièreVisite")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_dernière_visite");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateSuppression")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_suppression");
 
                     b.Property<string>("Immatriculation")
@@ -1794,19 +1794,19 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("conducteur_habituel");
 
                     b.Property<DateTime>("DateAffectation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_affectation");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime?>("DateRetrait")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_retrait");
 
                     b.Property<bool>("IsActif")
@@ -1821,10 +1821,6 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("société_id");
 
-                    b.Property<Guid>("VehiculeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("vehicule_id");
-
                     b.Property<Guid>("VéhiculeId")
                         .HasColumnType("uuid")
                         .HasColumnName("véhicule_id");
@@ -1835,8 +1831,8 @@ namespace GarageSystem.Infrastructure.Migrations
                     b.HasIndex("SociétéId")
                         .HasDatabaseName("ix_véhicule_société_société_id");
 
-                    b.HasIndex("VehiculeId")
-                        .HasDatabaseName("ix_véhicule_société_vehicule_id");
+                    b.HasIndex("VéhiculeId")
+                        .HasDatabaseName("ix_véhicule_société_véhicule_id");
 
                     b.ToTable("véhicule_société", (string)null);
                 });
@@ -1914,6 +1910,11 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
 
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nom");
+
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
@@ -1970,15 +1971,15 @@ namespace GarageSystem.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_creation");
 
                     b.Property<DateTime?>("DateModification")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("date_modification");
 
                     b.Property<DateTime>("Expiration")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("expiration");
 
                     b.Property<bool>("IsRevoked")
@@ -2405,10 +2406,10 @@ namespace GarageSystem.Infrastructure.Migrations
 
                     b.HasOne("GarageSystem.Domain.Entities.Vehicule", "Vehicule")
                         .WithMany()
-                        .HasForeignKey("VehiculeId")
+                        .HasForeignKey("VéhiculeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_véhicule_société_vehicule_vehicule_id");
+                        .HasConstraintName("fk_véhicule_société_vehicule_véhicule_id");
 
                     b.Navigation("Société");
 

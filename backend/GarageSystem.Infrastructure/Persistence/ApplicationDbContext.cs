@@ -79,6 +79,13 @@ public class ApplicationDbContext : IdentityDbContext<AppUser, AppRole, Guid>
         builder.Entity<Société>().HasIndex(s => s.NRC).IsUnique();
         builder.Entity<FactureGroupée>().HasIndex(f => f.Numéro).IsUnique();
 
+        // FK explicite : VéhiculeId (avec accent) → Vehicule.Id
+        // Sans ça, EF crée une shadow property vehicule_id (sans accent) en doublon
+        builder.Entity<VéhiculeSociété>()
+            .HasOne(vs => vs.Vehicule)
+            .WithMany()
+            .HasForeignKey(vs => vs.VéhiculeId);
+
         // Concurrence optimiste sur OR — xmin est géré automatiquement par PostgreSQL
         builder.Entity<OrdreReparation>()
             .UseXminAsConcurrencyToken();

@@ -378,7 +378,7 @@ public class BillingService(ApplicationDbContext db)
                 Montant       = dto.Montant,
                 ModePaiement  = dto.ModePaiement,
                 Référence     = dto.Référence,
-                DatePaiement  = dto.DatePaiement,
+                DatePaiement  = DateTime.SpecifyKind(dto.DatePaiement, DateTimeKind.Utc),
                 UserId        = userId,
             });
 
@@ -428,14 +428,16 @@ public class BillingService(ApplicationDbContext db)
 
     public async Task<RecapCaisseDto> GetRecapCaisseAsync()
     {
-        var today = DateTime.UtcNow.Date;
+        var todayStart = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var todayEnd   = todayStart.AddDays(1);
+
         var paiements = await db.Paiements
-            .Where(p => p.DatePaiement.Date == today)
+            .Where(p => p.DatePaiement >= todayStart && p.DatePaiement < todayEnd)
             .ToListAsync();
 
         var soldées = await db.Factures
             .CountAsync(f => f.Statut == FactureStatut.Soldée && f.DateSolde.HasValue
-                           && f.DateSolde.Value.Date == today);
+                           && f.DateSolde.Value >= todayStart && f.DateSolde.Value < todayEnd);
 
         return new RecapCaisseDto(
             paiements.Where(p => p.ModePaiement == ModePaiement.Espèces).Sum(p => p.Montant),

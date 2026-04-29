@@ -22,7 +22,8 @@
       "Bash(npx tsc *)",
       "Bash(dotnet build *)",
       "Bash(npx shadcn@latest add switch --yes)",
-      "Bash(npx shadcn@latest add textarea --yes)"
+      "Bash(npx shadcn@latest add textarea --yes)",
+      "Bash(git -C \"D:/Projects/HubLinks-Software/alteqiaGarage/garage-system\" show HEAD:backend/GarageSystem.Infrastructure/Migrations/ApplicationDbContextModelSnapshot.cs)"
     ]
   }
 }

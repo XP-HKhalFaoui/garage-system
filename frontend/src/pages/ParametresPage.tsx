@@ -4,7 +4,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { UserPlus, Power } from 'lucide-react'
 import httpClient from '@/services/httpClient'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -236,67 +239,123 @@ function FiscaliteTab() {
 
 // ── Tab: Utilisateurs ─────────────────────────────────────────────────────────
 
-interface UserEntry { id: string; email: string; role: string; isActif: boolean }
+const ROLES = ['Admin', 'Gérant', 'Mécanicien', 'Réceptionniste', 'Comptable', 'RH'] as const
+type Role = typeof ROLES[number]
+
+interface UserEntry { id: string; email: string; nom: string; role: string; isActif: boolean }
+
+const createSchema = z.object({
+  nom:      z.string().min(2, 'Requis'),
+  email:    z.string().email('Email invalide'),
+  password: z.string().min(8, 'Minimum 8 caractères'),
+  role:     z.enum(ROLES),
+})
+type CreateForm = z.infer<typeof createSchema>
 
 function UtilisateursTab() {
+  const qc = useQueryClient()
+  const [showCreate, setShowCreate] = useState(false)
+
   const { data, isLoading } = useQuery({
     queryKey: ['users-admin'],
-    queryFn: () => httpClient.get<UserEntry[]>('/auth/users').then(r => r.data),
-    retry: false,
+    queryFn: () => httpClient.get<UserEntry[]>('/admin/users').then(r => r.data),
   })
-
-  const qc = useQueryClient()
 
   const roleMut = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) =>
-      httpClient.patch(`/auth/users/${id}/role`, { role }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['users-admin'] })
-      toast.success('Rôle mis à jour')
-    },
+      httpClient.patch(`/admin/users/${id}/role`, { role }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users-admin'] }); toast.success('Rôle mis à jour') },
+    onError:   () => toast.error('Erreur lors de la mise à jour du rôle'),
   })
 
-  const ROLES = ['Admin', 'RH', 'Caissier', 'Technicien', 'Receptionniste']
+  const toggleMut = useMutation({
+    mutationFn: (id: string) => httpClient.patch(`/admin/users/${id}/toggle`, {}),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users-admin'] }); toast.success('Statut mis à jour') },
+    onError:   () => toast.error('Erreur lors du changement de statut'),
+  })
 
-  if (isLoading) return <div className="text-gray-400 text-sm">Chargement…</div>
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateForm>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { role: 'Mécanicien' },
+  })
+
+  const createMut = useMutation({
+    mutationFn: (dto: CreateForm) => httpClient.post('/admin/users', dto),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users-admin'] })
+      toast.success('Utilisateur créé')
+      setShowCreate(false)
+      reset()
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erreur création'),
+  })
+
+  if (isLoading) return <div className="text-gray-400 text-sm py-8 text-center">Chargement…</div>
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500">
-        Les utilisateurs sont créés lors de l'inscription. Modifiez les rôles directement dans le tableau.
-      </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          {data?.length ?? 0} utilisateur{(data?.length ?? 0) > 1 ? 's' : ''}
+        </p>
+        <Button size="sm" onClick={() => setShowCreate(true)}>
+          <UserPlus className="h-4 w-4 mr-1.5" />
+          Nouvel utilisateur
+        </Button>
+      </div>
 
+      {/* Table */}
       {!data || data.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">Aucun utilisateur trouvé</div>
+        <div className="text-center py-12 text-gray-400">Aucun utilisateur</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 text-xs uppercase">
               <tr>
+                <th className="text-left px-4 py-3">Nom</th>
                 <th className="text-left px-4 py-3">Email</th>
                 <th className="text-left px-4 py-3">Rôle</th>
                 <th className="text-left px-4 py-3">Statut</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {data.map(u => (
-                <tr key={u.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">{u.email}</td>
+                <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <td className="px-4 py-3 font-medium">{u.nom || '—'}</td>
+                  <td className="px-4 py-3 text-gray-500">{u.email}</td>
                   <td className="px-4 py-3">
                     <select
                       defaultValue={u.role}
                       onChange={e => roleMut.mutate({ id: u.id, role: e.target.value })}
-                      className="border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                      className="border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
                     >
                       {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      u.isActif ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      u.isActif
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                     }`}>
                       {u.isActif ? 'Actif' : 'Inactif'}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      title={u.isActif ? 'Désactiver' : 'Activer'}
+                      onClick={() => toggleMut.mutate(u.id)}
+                      disabled={toggleMut.isPending}
+                      className={`p-1.5 rounded transition-colors ${
+                        u.isActif
+                          ? 'text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                          : 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'
+                      }`}
+                    >
+                      <Power className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -304,6 +363,41 @@ function UtilisateursTab() {
           </table>
         </div>
       )}
+
+      {/* Dialog création */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Créer un utilisateur</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(d => createMut.mutate(d))} className="space-y-4 mt-2">
+            <Field label="Nom complet *" error={errors.nom?.message}>
+              <input {...register('nom')} placeholder="Ex : Karim Benali" className={input(errors.nom)} />
+            </Field>
+            <Field label="Email *" error={errors.email?.message}>
+              <input {...register('email')} type="email" placeholder="user@garage.local" className={input(errors.email)} />
+            </Field>
+            <Field label="Mot de passe *" error={errors.password?.message}>
+              <input {...register('password')} type="password" placeholder="Minimum 8 caractères" className={input(errors.password)} />
+            </Field>
+            <Field label="Rôle *" error={errors.role?.message}>
+              <select {...register('role')} className={input(errors.role)}>
+                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setShowCreate(false)}
+                className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+                Annuler
+              </button>
+              <button type="submit" disabled={createMut.isPending}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                {createMut.isPending ? 'Création…' : 'Créer'}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
