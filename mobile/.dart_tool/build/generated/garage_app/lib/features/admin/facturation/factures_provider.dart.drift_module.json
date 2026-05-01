@@ -1,0 +1,10 @@
+{
+  "elements": {},
+  "imports": [
+    "package:flutter_riverpod/flutter_riverpod.dart",
+    "package:garage_app/shared/models/facture.dart",
+    "package:garage_app/core/api/api_client.dart",
+    "package:garage_app/core/api/endpoints.dart",
+    "package:garage_app/shared/providers/auth_provider.dart"
+  ]
+}

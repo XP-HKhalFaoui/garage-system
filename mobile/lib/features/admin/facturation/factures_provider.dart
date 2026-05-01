@@ -1,0 +1,55 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/models/facture.dart';
+import '../../../core/api/api_client.dart';
+import '../../../core/api/endpoints.dart';
+import '../../../shared/providers/auth_provider.dart';
+
+class FacturesFilter {
+  const FacturesFilter({this.statut, this.search, this.page = 1});
+  final String? statut;
+  final String? search;
+  final int page;
+
+  Map<String, dynamic> toQueryParams() => {
+        if (statut != null) 'statut': statut,
+        if (search != null && search!.isNotEmpty) 'search': search,
+        'page': page,
+        'pageSize': 20,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      other is FacturesFilter &&
+      other.statut == statut &&
+      other.search == search &&
+      other.page == page;
+
+  @override
+  int get hashCode => Object.hash(statut, search, page);
+}
+
+final facturesProvider =
+    FutureProvider.autoDispose.family<List<Facture>, FacturesFilter>(
+  (ref, filter) async {
+    final api = ref.watch(apiClientProvider);
+    final list = await api.get<List<dynamic>>(
+      Endpoints.factures,
+      queryParams: filter.toQueryParams(),
+      fromJson: (d) => d as List<dynamic>,
+    );
+    return list
+        .map((e) => Facture.fromJson(e as Map<String, dynamic>))
+        .toList();
+  },
+);
+
+final factureDetailProvider =
+    FutureProvider.autoDispose.family<Facture, String>(
+  (ref, id) async {
+    final api = ref.watch(apiClientProvider);
+    return api.get<Facture>(
+      Endpoints.factureDetail(id),
+      fromJson: (d) => Facture.fromJson(d as Map<String, dynamic>),
+    );
+  },
+);

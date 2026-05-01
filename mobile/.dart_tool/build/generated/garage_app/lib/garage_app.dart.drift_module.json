@@ -1,0 +1,23 @@
+{
+  "elements": {},
+  "imports": [
+    "package:flutter/material.dart",
+    "package:hooks_riverpod/hooks_riverpod.dart",
+    "package:go_router/go_router.dart",
+    "package:garage_app/core/theme/app_theme.dart",
+    "package:garage_app/shared/providers/auth_provider.dart",
+    "package:garage_app/features/auth/login/login_screen.dart",
+    "package:garage_app/features/admin/dashboard/dashboard_screen.dart",
+    "package:garage_app/features/admin/facturation/factures_list_screen.dart",
+    "package:garage_app/features/admin/facturation/facture_detail_screen.dart",
+    "package:garage_app/features/admin/clients/clients_list_screen.dart",
+    "package:garage_app/features/admin/clients/client_detail_screen.dart",
+    "package:garage_app/features/admin/stock/stock_screen.dart",
+    "package:garage_app/features/admin/file_attente/file_attente_screen.dart",
+    "package:garage_app/features/technicien/mes_or/mes_or_screen.dart",
+    "package:garage_app/features/technicien/detail_or/detail_or_screen.dart",
+    "package:garage_app/features/technicien/pieces/consommer_pieces_screen.dart",
+    "package:garage_app/features/technicien/photos/photos_or_screen.dart",
+    "package:garage_app/core/router/app_router.dart"
+  ]
+}

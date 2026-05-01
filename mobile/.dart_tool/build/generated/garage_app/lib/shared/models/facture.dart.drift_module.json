@@ -1,0 +1,6 @@
+{
+  "elements": {},
+  "imports": [
+    "package:garage_app/shared/models/client.dart"
+  ]
+}

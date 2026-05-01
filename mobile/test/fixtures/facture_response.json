@@ -1,0 +1,28 @@
+{
+  "id": "f-001",
+  "numero": "FAC-2024-001",
+  "dateFacture": "2024-01-15T10:00:00Z",
+  "statut": "Emise",
+  "client": {
+    "id": "c-001",
+    "nom": "Benali Ahmed",
+    "telephone": "+213555123456"
+  },
+  "totalHT": 12605.04,
+  "montantTVA": 2394.96,
+  "totalTTC": 15000.0,
+  "montantDejaPaye": 5000.0,
+  "restantDu": 10000.0,
+  "lignes": [
+    {
+      "designation": "Plaquettes de frein",
+      "quantite": 1,
+      "prixUnitaireHT": 8000.0
+    },
+    {
+      "designation": "Main d'oeuvre",
+      "quantite": 2,
+      "prixUnitaireHT": 2302.52
+    }
+  ]
+}

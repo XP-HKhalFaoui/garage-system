@@ -1,0 +1,74 @@
+name: garage_app
+description: Système de gestion de garage — Application mobile
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+  hooks_riverpod: ^2.5.1
+  flutter_hooks: ^0.20.5
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^13.2.0
+
+  # HTTP & API
+  dio: ^5.4.3
+  pretty_dio_logger: ^1.3.1
+
+  # Auth & Storage
+  flutter_secure_storage: ^9.0.0
+
+  # Local DB (offline cache)
+  drift: ^2.18.0
+  sqlite3_flutter_libs: ^0.5.22
+  path_provider: ^2.1.3
+  path: ^1.9.0
+
+  # Media
+  image_picker: ^1.1.0
+  camera: ^0.11.0
+  cached_network_image: ^3.3.1
+  url_launcher: ^6.3.0
+
+  # Barcode scanner
+  mobile_scanner: ^5.2.3
+
+  # Notifications
+  flutter_local_notifications: ^17.1.2
+
+  # Real-time
+  signalr_netcore: ^1.3.6
+
+  # Utils
+  intl: ^0.19.0
+  lottie: ^3.1.2
+  connectivity_plus: ^6.0.3
+  open_file: ^3.3.2
+  flutter_image_compress: ^2.3.0
+
+  # Icons
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.9
+  drift_dev: ^2.18.0
+  riverpod_generator: ^2.4.0
+  golden_toolkit: ^0.15.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/animations/
+    - assets/images/

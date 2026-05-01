@@ -1,0 +1,7 @@
+{
+  "elements": {},
+  "imports": [
+    "package:dio/dio.dart",
+    "package:garage_app/core/auth/auth_service.dart"
+  ]
+}

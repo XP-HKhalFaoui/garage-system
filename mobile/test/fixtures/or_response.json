@@ -1,0 +1,27 @@
+{
+  "id": "or-001",
+  "numero": "OR-2024-001",
+  "statut": "EnCours",
+  "priorite": "Normal",
+  "dateOuverture": "2024-01-15T08:00:00Z",
+  "vehicule": {
+    "id": "v-001",
+    "immatriculation": "123-ALG-456",
+    "marque": "Toyota",
+    "modele": "Corolla"
+  },
+  "client": {
+    "id": "c-001",
+    "nom": "Benali Ahmed",
+    "telephone": "+213555123456"
+  },
+  "technicien": {
+    "id": "t-001",
+    "prenom": "Karim",
+    "nom": "Hadj"
+  },
+  "montantTotal": 15000.0,
+  "nbLignes": 2,
+  "diagnostic": "Changement plaquettes de frein avant",
+  "accumulatedMinutes": 45
+}
