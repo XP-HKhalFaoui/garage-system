@@ -96,6 +96,17 @@ public record LigneBRResponseDto(
     decimal Total
 );
 
+// ── Import CSV ────────────────────────────────────────────────────────────────
+public record ImportCsvResultDto(
+    int Total,
+    int Créés,
+    int MisÀJour,
+    double DuréeMs,
+    List<ImportCsvErreurDto> Erreurs
+);
+
+public record ImportCsvErreurDto(int Ligne, string Référence, string Message);
+
 // ── Alertes stock ─────────────────────────────────────────────────────────────
 public record AlerteStockDto(
     Guid Id,

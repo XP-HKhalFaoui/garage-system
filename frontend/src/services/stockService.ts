@@ -42,4 +42,23 @@ export const stockService = {
 
   résoudreAlerte: (id: string, commentaire: string) =>
     httpClient.patch(`/alertes/${id}/resoudre`, { commentaire }),
+
+  downloadTemplateCsv: () =>
+    httpClient.get('/articles/template-csv', { responseType: 'blob' }).then(r => r.data as Blob),
+
+  importCsv: (file: File, onProgress?: (pct: number) => void) =>
+    httpClient.post<ImportCsvResult>('/articles/import-csv', (() => {
+      const fd = new FormData(); fd.append('file', file); return fd
+    })(), {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: e => onProgress && e.total && onProgress(Math.round(e.loaded * 100 / e.total)),
+    }).then(r => r.data),
+}
+
+export interface ImportCsvResult {
+  total: number
+  créés: number
+  misÀJour: number
+  duréeMs: number
+  erreurs: { ligne: number; référence: string; message: string }[]
 }

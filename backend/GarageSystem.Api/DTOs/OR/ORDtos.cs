@@ -93,3 +93,25 @@ public record ORDetailDto(
     List<LigneORResponseDto> Lignes,
     List<HistoriqueStatutDto> Historique
 );
+
+
+public record PlanningORDto(
+    Guid Id,
+    string Numéro,
+    ORStatut Statut,
+    ORPriorité Priorité,
+    TypeIntervention TypeIntervention,
+    DateTime HeureDebut,
+    DateTime? HeureFin,
+    Guid? TechnicienId,
+    string? TechnicienNom,
+    string Immatriculation,
+    string Marque,
+    string Modele
+);
+
+public record ReplanifierORDto(
+    DateTime HeureDebut,
+    DateTime? HeureFin,
+    Guid? TechnicienId
+);

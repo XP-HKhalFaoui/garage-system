@@ -21,6 +21,9 @@
     <PackageReference Include="QuestPDF" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="CsvHelper" />
+    <PackageReference Include="WebPush" />
+    <PackageReference Include="ClosedXML" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>
   <ItemGroup>

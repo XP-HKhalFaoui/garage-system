@@ -26,6 +26,10 @@ import { BonsReceptionPage } from '@/pages/stock/BonsReceptionPage'
 import { ParametresPage }    from '@/pages/ParametresPage'
 import SociétésPage          from '@/pages/fleet/SociétésPage'
 import SociétéDetailPage     from '@/pages/fleet/SociétéDetailPage'
+import ImportCsvPage         from '@/pages/stock/ImportCsvPage'
+import PlanningPage          from '@/pages/atelier/PlanningPage'
+import ParametresNotificationsPage from '@/pages/ParametresNotificationsPage'
+import ComptabilitePage      from '@/pages/ComptabilitePage'
 
 export default function App() {
   return (
@@ -44,9 +48,12 @@ export default function App() {
           <Route path="/or/kanban"      element={<KanbanPage />} />
           <Route path="/or/nouveau"     element={<CreateORPage />} />
           <Route path="/or/:id"         element={<ORDetailPage />} />
-          <Route path="/stock/articles"       element={<ArticlesPage />} />
-          <Route path="/stock/bons-reception" element={<BonsReceptionPage />} />
-          <Route path="/stock/alertes"        element={<AlertesStockPage />} />
+          <Route path="/stock/articles"        element={<ArticlesPage />} />
+          <Route path="/stock/bons-reception"  element={<BonsReceptionPage />} />
+          <Route path="/stock/alertes"         element={<AlertesStockPage />} />
+          <Route path="/stock/import-csv"      element={<ImportCsvPage />} />
+          <Route path="/atelier/planning"      element={<PlanningPage />} />
+          <Route path="/parametres/notifications" element={<ParametresNotificationsPage />} />
           <Route path="/clients"        element={<ClientsPage />} />
           <Route path="/vehicules"      element={<VéhiculesPage />} />
           <Route path="/vehicules/:id"  element={<VehiculeDetailPage />} />
@@ -68,6 +75,11 @@ export default function App() {
             <Route path="/rh/pointage" element={<PointagePage />} />
             <Route path="/rh/paie"     element={<PaiePage />} />
             <Route path="/rh/conges"   element={<CongesPage />} />
+          </Route>
+
+          {/* Admin + RH */}
+          <Route element={<PrivateRoute allowedRoles={['RH']} />}>
+            <Route path="/comptabilite" element={<ComptabilitePage />} />
           </Route>
 
           {/* Admin only */}

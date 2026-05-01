@@ -16,6 +16,7 @@ public class OrdreReparation : BaseEntity
     public DateTime DateOuverture { get; set; } = DateTime.UtcNow;
     public DateTime? DateFermeture { get; set; }
     public DateTime? HeureDebut { get; set; }
+    public DateTime? HeureFin { get; set; }
     public string? Diagnostic { get; set; }
     public decimal MontantTotal { get; set; }
     public Guid? FactureId { get; set; }

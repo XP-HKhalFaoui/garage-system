@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text;
 
 namespace GarageSystem.Api.Controllers;
 
@@ -16,11 +17,13 @@ public class ArticlesController : ControllerBase
 {
     private readonly StockService _service;
     private readonly ApplicationDbContext _db;
+    private readonly ImportCsvService _importCsv;
 
-    public ArticlesController(StockService service, ApplicationDbContext db)
+    public ArticlesController(StockService service, ApplicationDbContext db, ImportCsvService importCsv)
     {
         _service = service;
         _db = db;
+        _importCsv = importCsv;
     }
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -90,5 +93,38 @@ public class ArticlesController : ControllerBase
     {
         await _service.DeleteAsync(id);
         return NoContent();
+    }
+
+    // GET /api/articles/template-csv
+    [HttpGet("template-csv")]
+    public IActionResult TemplateCsv()
+    {
+        var csv = ImportCsvService.GenerateTemplate();
+        var bytes = Encoding.UTF8.GetBytes(csv);
+        return File(bytes, "text/csv", "articles-template.csv");
+    }
+
+    // POST /api/articles/import-csv
+    [HttpPost("import-csv")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> ImportCsv(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { title = "Fichier manquant", status = 400 });
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (ext != ".csv")
+            return UnprocessableEntity(new { title = "Extension invalide, seul .csv est accepté", status = 422 });
+
+        if (file.Length > 5 * 1024 * 1024)
+            return UnprocessableEntity(new { title = "Fichier trop grand (max 5MB)", status = 422 });
+
+        using var stream = file.OpenReadStream();
+        var result = await _importCsv.ImportAsync(stream);
+
+        if (result.Erreurs.Count > 0)
+            return UnprocessableEntity(result);
+
+        return Ok(result);
     }
 }

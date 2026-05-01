@@ -20,6 +20,9 @@ public static class ServiceExtensions
         services.AddScoped<RHService>();
         services.AddScoped<StatsService>();
         services.AddScoped<FleetService>();
+        services.AddScoped<ImportCsvService>();
+        services.AddScoped<PushNotificationService>();
+        services.AddScoped<ComptabiliteExportService>();
 
         services.AddTransient<StockAlertJob>();
         services.AddTransient<OffresScanJob>();

@@ -43,6 +43,11 @@
     <!-- Extensions -->
     <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.0" />
 
+    <!-- CSV / Excel / Push -->
+    <PackageVersion Include="CsvHelper" Version="33.0.1" />
+    <PackageVersion Include="ClosedXML" Version="0.104.1" />
+    <PackageVersion Include="WebPush" Version="1.0.12" />
+
     <!-- Tests -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageVersion Include="xunit" Version="2.6.2" />

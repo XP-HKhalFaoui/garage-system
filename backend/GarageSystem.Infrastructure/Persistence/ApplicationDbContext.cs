@@ -53,6 +53,9 @@ public class ApplicationDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     // Auth
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    // Push Notifications
+    public DbSet<PushSubscriptionEntity> PushSubscriptions => Set<PushSubscriptionEntity>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

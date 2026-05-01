@@ -138,4 +138,74 @@ public class OrdresReparationController : ControllerBase
         await _service.RemoveLigneAsync(id, ligneId, UserId);
         return NoContent();
     }
+
+    // GET /api/ordres-reparation/planning?debut=2025-05-01&fin=2025-05-07
+    [HttpGet("planning")]
+    public async Task<IActionResult> GetPlanning(
+        [FromQuery] DateTime debut,
+        [FromQuery] DateTime fin)
+    {
+        var ors = await _db.OrdresReparation
+            .Include(o => o.Vehicule)
+            .Include(o => o.Technicien)
+            .Where(o => o.Statut != ORStatut.Livré
+                && o.Statut != ORStatut.Annulé
+                && o.HeureDebut != null
+                && o.HeureDebut >= debut
+                && o.HeureDebut < fin.AddDays(1))
+            .AsNoTracking()
+            .ToListAsync();
+
+        var planifiésDtos = ors.Select(o => new PlanningORDto(
+            o.Id, o.Numéro, o.Statut, o.Priorité, o.TypeIntervention,
+            o.HeureDebut!.Value, o.HeureFin,
+            o.TechnicienId,
+            o.Technicien == null ? null : o.Technicien.Nom + " " + o.Technicien.Prénom,
+            o.Vehicule.Immatriculation, o.Vehicule.Marque, o.Vehicule.Modele
+        )).ToList();
+
+        var nonPlanifiésRaw = await _db.OrdresReparation
+            .Include(o => o.Vehicule)
+            .Where(o => o.Statut == ORStatut.EnAttente && o.HeureDebut == null)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var nonPlanifiés = nonPlanifiésRaw.Select(o => new PlanningORDto(
+            o.Id, o.Numéro, o.Statut, o.Priorité, o.TypeIntervention,
+            DateTime.MinValue, null, null, null,
+            o.Vehicule.Immatriculation, o.Vehicule.Marque, o.Vehicule.Modele
+        )).ToList();
+
+        return Ok(new { planifiés = planifiésDtos, nonPlanifiés });
+    }
+
+    // PATCH /api/ordres-reparation/{id}/replanifier
+    [HttpPatch("{id:guid}/replanifier")]
+    public async Task<IActionResult> Replanifier(Guid id, [FromBody] ReplanifierORDto dto)
+    {
+        var or = await _db.OrdresReparation.FindAsync(id);
+        if (or is null) return NotFound();
+
+        // Détection conflit pour le même technicien
+        if (dto.TechnicienId.HasValue && dto.HeureFin.HasValue)
+        {
+            var conflit = await _db.OrdresReparation.AnyAsync(o =>
+                o.Id != id
+                && o.TechnicienId == dto.TechnicienId
+                && o.HeureDebut != null
+                && o.HeureFin != null
+                && o.HeureDebut < dto.HeureFin
+                && o.HeureFin > dto.HeureDebut);
+
+            if (conflit)
+                return Conflict(new { title = "Conflit de planning détecté pour ce technicien", status = 409 });
+        }
+
+        or.TechnicienId = dto.TechnicienId ?? or.TechnicienId;
+        or.HeureDebut = dto.HeureDebut;
+        or.HeureFin = dto.HeureFin;
+
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
 }
