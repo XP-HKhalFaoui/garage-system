@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:url_launcher/url_launcher.dart' as launcher;
 import '../../../shared/models/facture.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import 'factures_provider.dart';
 
@@ -92,15 +92,8 @@ class _FactureDetailBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(facture.client.nom,
+                Text(facture.clientNom,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
-                if (facture.client.telephone != null)
-                  InkWell(
-                    onTap: () => launcher.launchUrl(
-                        Uri.parse('tel:${facture.client.telephone}')),
-                    child: Text(facture.client.telephone!,
-                        style: const TextStyle(color: Colors.blue)),
-                  ),
               ],
             ),
           ),

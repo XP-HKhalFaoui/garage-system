@@ -6,6 +6,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../shared/widgets/async_value_widget.dart';
+import '../../../core/api/endpoints.dart';
 
 class _DashboardData {
   const _DashboardData({
@@ -20,18 +21,19 @@ class _DashboardData {
   final int articlesStockBas;
 }
 
+
 final dashboardProvider =
     FutureProvider.autoDispose<_DashboardData>((ref) async {
   final api = ref.watch(apiClientProvider);
   final data = await api.get<Map<String, dynamic>>(
-    '/api/stats/recap-journee',
+    Endpoints.statsRecapJournee,
     fromJson: (d) => d as Map<String, dynamic>,
   );
   return _DashboardData(
-    caJour: (data['caJour'] as num?)?.toDouble() ?? 0,
-    orEnCours: (data['orEnCours'] as int?) ?? 0,
-    facturesNonSoldees: (data['facturesNonSoldees'] as int?) ?? 0,
-    articlesStockBas: (data['articlesStockBas'] as int?) ?? 0,
+    caJour: (data['caMoisCourant'] as num?)?.toDouble() ?? 0,
+    orEnCours: (data['nbOREnCours'] as int?) ?? 0,
+    facturesNonSoldees: (data['nbFacturesEnRetard'] as int?) ?? 0,
+    articlesStockBas: (data['nbArticlesSousMin'] as int?) ?? 0,
   );
 });
 
@@ -90,7 +92,7 @@ class DashboardScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: _StatCard(
-                            label: "CA du jour",
+                            label: "CA du mois",
                             value: formatDZD(data.caJour),
                             icon: Icons.payments_outlined,
                             color: Colors.green,

@@ -17,7 +17,7 @@ export function CaissePage() {
 
   const { data: facturesData, isLoading: facturesLoading } = useQuery({
     queryKey: ['factures-jour'],
-    queryFn: () => factureService.getList({ statut: 'Soldée', dateFrom: today, dateTo: today, pageSize: 50 }),
+    queryFn: () => factureService.getList({ statut: 'Soldee', dateFrom: today, dateTo: today, pageSize: 50 }),
     refetchInterval: 30_000,
   })
 

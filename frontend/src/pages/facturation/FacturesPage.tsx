@@ -21,11 +21,11 @@ const MODES: ModePaiement[] = ['Espèces', 'Virement', 'Chèque', 'CB']
 const MODE_ICONS: Record<ModePaiement, string> = { Espèces: '💵', Virement: '🏦', Chèque: '📄', CB: '💳' }
 
 function statutVariant(s: FactureStatut) {
-  const map: Record<FactureStatut, 'invoice-Emise' | 'invoice-PartiellemntPayée' | 'invoice-Soldée' | 'invoice-EnRetard' | 'invoice-Annulée'> = {
-    'Émise':             'invoice-Emise',
-    'PartiellemntPayée': 'invoice-PartiellemntPayée',
-    'Soldée':            'invoice-Soldée',
-    'Annulée':           'invoice-Annulée',
+  const map: Record<FactureStatut, 'invoice-Emise' | 'invoice-PartiellementPayee' | 'invoice-Soldee' | 'invoice-EnRetard' | 'invoice-Annulee'> = {
+    'Emise':             'invoice-Emise',
+    'PartiellementPayee': 'invoice-PartiellementPayee',
+    'Soldee':            'invoice-Soldee',
+    'Annulee':           'invoice-Annulee',
   }
   return map[s] ?? 'invoice-Emise'
 }
@@ -222,7 +222,7 @@ export function FacturesPage() {
                 <TableCell className="text-right font-bold">{FMT(f.totalTTC)}</TableCell>
                 <TableCell>
                   <StatusBadge variant={statutVariant(f.statut)} />
-                  {f.restantDû > 0 && f.statut !== 'Annulée' && (
+                  {f.restantDû > 0 && f.statut !== 'Annulee' && (
                     <p className="text-xs text-muted-foreground mt-0.5">Reste : {FMT(f.restantDû)}</p>
                   )}
                 </TableCell>
@@ -234,7 +234,7 @@ export function FacturesPage() {
                     >
                       <FileText className="h-3.5 w-3.5" />
                     </Button>
-                    {(f.statut === 'Émise' || f.statut === 'PartiellemntPayée') && (
+                    {(f.statut === 'Emise' || f.statut === 'PartiellementPayee') && (
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" title="Paiement" onClick={() => setPaiementModal(f)}>
                         <CreditCard className="h-3.5 w-3.5" />
                       </Button>

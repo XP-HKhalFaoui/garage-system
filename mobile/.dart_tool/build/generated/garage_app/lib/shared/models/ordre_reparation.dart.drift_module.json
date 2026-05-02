@@ -1,7 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:garage_app/shared/models/client.dart",
-    "package:garage_app/shared/models/vehicule.dart"
-  ]
-}

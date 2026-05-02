@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../shared/models/ordre_reparation.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 
 class ORStatutActions extends HookConsumerWidget {

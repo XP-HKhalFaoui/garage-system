@@ -32,11 +32,23 @@ final facturesProvider =
     FutureProvider.autoDispose.family<List<Facture>, FacturesFilter>(
   (ref, filter) async {
     final api = ref.watch(apiClientProvider);
-    final list = await api.get<List<dynamic>>(
+    final response = await api.get<dynamic>(
       Endpoints.factures,
       queryParams: filter.toQueryParams(),
-      fromJson: (d) => d as List<dynamic>,
+      fromJson: (d) => d,
     );
+
+    List<dynamic> list;
+    if (response is List) {
+      list = response;
+    } else if (response is Map) {
+      // Handles paginated responses (e.g. { "items": [...], "totalCount": 10 })
+      list = (response['items'] ?? response['data'] ?? response['results'] ?? [])
+          as List<dynamic>;
+    } else {
+      list = [];
+    }
+
     return list
         .map((e) => Facture.fromJson(e as Map<String, dynamic>))
         .toList();

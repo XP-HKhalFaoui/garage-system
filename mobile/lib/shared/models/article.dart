@@ -12,12 +12,14 @@ class Mouvement {
   final double quantite;
   final double stockResultant;
 
-  factory Mouvement.fromJson(Map<String, dynamic> json) => Mouvement(
-        id: json['id'] as String,
-        date: DateTime.parse(json['date'] as String),
-        type: json['type'] as String,
-        quantite: (json['quantite'] as num).toDouble(),
-        stockResultant: (json['stockResultant'] as num).toDouble(),
+  factory Mouvement.fromJson(Map<dynamic, dynamic> json) => Mouvement(
+        id: (json['id'] ?? '').toString(),
+        date: json['date'] != null
+            ? DateTime.parse(json['date'].toString())
+            : DateTime.now(),
+        type: (json['type'] ?? '').toString(),
+        quantite: (json['quantité'] ?? json['quantite'] as num?)?.toDouble() ?? 0.0,
+        stockResultant: (json['stockRésultant'] ?? json['stockResultant'] as num?)?.toDouble() ?? 0.0,
       );
 }
 
@@ -51,17 +53,18 @@ class Article {
       !isStockBas && stockActuel < stockMinimum * 1.5;
 
   factory Article.fromJson(Map<String, dynamic> json) => Article(
-        id: json['id'] as String,
-        reference: json['reference'] as String,
-        designation: json['designation'] as String,
-        categorie: json['categorie'] as String?,
-        stockActuel: (json['stockActuel'] as num).toDouble(),
-        stockMinimum: (json['stockMinimum'] as num).toDouble(),
-        prixVente: (json['prixVente'] as num).toDouble(),
+        id: (json['id'] ?? '').toString(),
+        // API sends Référence (with accent)
+        reference: (json['référence'] ?? json['reference'] ?? '').toString(),
+        designation: (json['désignation'] ?? json['designation'] ?? '').toString(),
+        categorie: (json['catégorie'] ?? json['categorie'])?.toString(),
+        stockActuel: (json['stockActuel'] as num?)?.toDouble() ?? 0.0,
+        stockMinimum: (json['stockMinimum'] as num?)?.toDouble() ?? 0.0,
+        prixVente: (json['prixVente'] as num?)?.toDouble() ?? 0.0,
         prixAchat: (json['prixAchat'] as num?)?.toDouble(),
-        emplacementRayonnage: json['emplacementRayonnage'] as String?,
+        emplacementRayonnage: json['emplacementRayonnage']?.toString(),
         mouvements: (json['mouvements'] as List<dynamic>?)
-            ?.map((m) => Mouvement.fromJson(m as Map<String, dynamic>))
+            ?.map((m) => Mouvement.fromJson(m as Map))
             .toList(),
       );
 

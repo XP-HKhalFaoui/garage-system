@@ -25,6 +25,52 @@ public class OrdresReparationController : ControllerBase
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
+    // GET /api/ordres-reparation?today=true&statut=EnCours&technicienId=...
+    [HttpGet]
+    public async Task<IActionResult> GetList(
+        [FromQuery] bool?      today,
+        [FromQuery] ORStatut?  statut,
+        [FromQuery] Guid?      technicienId)
+    {
+        if (today == true)
+        {
+            var result = await _service.GetTodayAsync(statut, technicienId);
+            return Ok(result);
+        }
+
+        // liste générale (filtrée par statut / technicien si fournis)
+        var query = _db.OrdresReparation
+            .Include(o => o.Vehicule).ThenInclude(v => v.Client)
+            .Include(o => o.Technicien)
+            .Include(o => o.Lignes)
+            .AsNoTracking();
+
+        if (statut.HasValue)       query = query.Where(o => o.Statut == statut.Value);
+        if (technicienId.HasValue) query = query.Where(o => o.TechnicienId == technicienId.Value);
+
+        var ors = await query
+            .OrderByDescending(o => o.DateOuverture)
+            .Take(100)
+            .ToListAsync();
+
+        var dtos = ors.Select(o => new ORSummaryDto(
+            o.Id,
+            o.Numéro,
+            o.Statut,
+            o.Priorité,
+            o.DateOuverture.ToString("HH:mm"),
+            new VehiculeInfoDto(o.Vehicule.Id, o.Vehicule.Immatriculation,
+                o.Vehicule.Marque, o.Vehicule.Modele, o.Vehicule.KilométrageActuel),
+            new ClientInfoDto(o.Vehicule.Client.Id, o.Vehicule.Client.Nom, o.Vehicule.Client.Téléphone),
+            o.Technicien == null ? null :
+                new TechnicienInfoDto(o.Technicien.Id, o.Technicien.Nom, o.Technicien.Prénom),
+            o.Lignes.Count,
+            o.MontantTotal
+        ));
+
+        return Ok(dtos);
+    }
+
     // POST /api/ordres-reparation
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateORDto dto)

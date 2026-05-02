@@ -9,9 +9,9 @@ class ClientResume {
   final String? telephone;
 
   factory ClientResume.fromJson(Map<String, dynamic> json) => ClientResume(
-        id: json['id'] as String,
-        nom: json['nom'] as String,
-        telephone: json['telephone'] as String?,
+        id: (json['id'] ?? '').toString(),
+        nom: (json['nom'] ?? json['clientNom'] ?? 'Client Inconnu').toString(),
+        telephone: (json['téléphone'] ?? json['telephone'])?.toString(),
       );
 }
 
@@ -52,13 +52,13 @@ class Client {
   }
 
   factory Client.fromJson(Map<String, dynamic> json) => Client(
-        id: json['id'] as String,
-        nom: json['nom'] as String,
-        type: json['type'] as String? ?? 'Particulier',
-        prenom: json['prenom'] as String?,
-        telephone: json['telephone'] as String?,
-        email: json['email'] as String?,
-        wilaya: json['wilaya'] as String?,
+        id: (json['id'] ?? '').toString(),
+        nom: (json['nom'] ?? '').toString(),
+        type: (json['type'] ?? 'Particulier').toString(),
+        prenom: json['prenom']?.toString(),
+        telephone: (json['téléphone'] ?? json['telephone'])?.toString(),
+        email: json['email']?.toString(),
+        wilaya: json['wilaya']?.toString(),
         nbVehicules: (json['nbVehicules'] as int?) ?? 0,
         nbOr: (json['nbOr'] as int?) ?? 0,
         caTotal: (json['caTotal'] as num?)?.toDouble() ?? 0,

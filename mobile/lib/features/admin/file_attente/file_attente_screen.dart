@@ -6,19 +6,31 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/api/signalr_service.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/or_card.dart';
 
 final fileAttenteProvider =
     FutureProvider.autoDispose<List<OrdreReparation>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final list = await api.get<List<dynamic>>(
+  final response = await api.get<dynamic>(
     Endpoints.ordresReparation,
     queryParams: {'today': true},
-    fromJson: (d) => d as List<dynamic>,
+    fromJson: (d) => d,
   );
+
+  List<dynamic> list;
+  if (response is List) {
+    list = response;
+  } else if (response is Map) {
+    list = (response['items'] ?? response['data'] ?? response['results'] ?? [])
+        as List<dynamic>;
+  } else {
+    list = [];
+  }
+
   return list
-      .map((e) => OrdreReparation.fromJson(e as Map<String, dynamic>))
+      .map((e) => OrdreReparation.fromJson(e as Map))
       .toList();
 });
 

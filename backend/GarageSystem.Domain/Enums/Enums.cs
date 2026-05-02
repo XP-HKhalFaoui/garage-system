@@ -10,7 +10,7 @@ public enum LigneORType { Pièce, MO }
 public enum ArticleCategorie { Filtres, Huiles, Freinage, Transmission, Suspension, Moteur, Électrique, Carrosserie, Accessoires, Autre }
 public enum ArticleUnité { Pièce, Litre, Kg, Mètre }
 public enum MouvementStockType { EntréeBR, SortieOR, AjustementManuel, Inventaire, AnnulationOR }
-public enum FactureStatut { Émise, PartiellemntPayée, Soldée, Annulée }
+public enum FactureStatut { Emise, PartiellementPayee, Soldee, Annulee }
 public enum DevisStatut { Brouillon, Validé, EnvoyéClient, Accepté, Refusé, Expiré }
 public enum ModePaiement { Espèces, Virement, Chèque, CB }
 public enum NiveauUrgence { Immédiat, Bientôt, Préventif }

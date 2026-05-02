@@ -6,19 +6,31 @@ import '../../../shared/models/article.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 
 final articlesProvider =
     FutureProvider.autoDispose.family<List<Article>, String>(
   (ref, search) async {
     final api = ref.watch(apiClientProvider);
-    final list = await api.get<List<dynamic>>(
+    final response = await api.get<dynamic>(
       Endpoints.articles,
       queryParams: search.isNotEmpty ? {'search': search} : null,
-      fromJson: (d) => d as List<dynamic>,
+      fromJson: (d) => d,
     );
+
+    List<dynamic> list;
+    if (response is List) {
+      list = response;
+    } else if (response is Map) {
+      final raw = response['items'] ?? response['data'] ?? response['results'] ?? [];
+      list = raw is List ? raw : [];
+    } else {
+      list = [];
+    }
+
     return list
-        .map((e) => Article.fromJson(e as Map<String, dynamic>))
+        .map((e) => Article.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   },
 );

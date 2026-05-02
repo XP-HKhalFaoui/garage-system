@@ -31,7 +31,15 @@ class AuthService {
       final data = response.data as Map<String, dynamic>;
       _accessToken = data['accessToken'] as String;
       await _tokenStorage.saveRefreshToken(data['refreshToken'] as String);
-      final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+
+      UserModel user;
+      if (data.containsKey('user') && data['user'] != null) {
+        user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+      } else {
+        // Fetch user info from /me if not provided in login response
+        user = await getCurrentUser();
+      }
+
       return AuthResult(user: user, accessToken: _accessToken!);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -64,8 +72,17 @@ class AuthService {
   }
 
   Future<UserModel> getCurrentUser() async {
-    final response = await _dio.get(Endpoints.me);
-    return UserModel.fromJson(response.data as Map<String, dynamic>);
+    try {
+      final response = await _dio.get(
+        Endpoints.me,
+        options: Options(headers: {
+          if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+        }),
+      );
+      return UserModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
   }
 
   bool _isTokenExpiringSoon(String token) {

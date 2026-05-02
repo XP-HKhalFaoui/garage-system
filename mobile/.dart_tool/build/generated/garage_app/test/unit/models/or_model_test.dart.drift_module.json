@@ -1,9 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:flutter_test/flutter_test.dart",
-    "package:garage_app/shared/models/ordre_reparation.dart",
-    "package:garage_app/shared/models/client.dart",
-    "package:garage_app/shared/models/vehicule.dart"
-  ]
-}

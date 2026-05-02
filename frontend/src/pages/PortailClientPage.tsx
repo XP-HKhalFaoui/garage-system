@@ -37,10 +37,10 @@ const STATUT_OR: Record<string, { label: string; color: string; bg: string }> = 
 }
 
 const STATUT_FAC: Record<string, { label: string; color: string }> = {
-  Émise:              { label: 'Émise',          color: '#2563eb' },
+  Émise:              { label: 'Emise',          color: '#2563eb' },
   PartiellemntPayée:  { label: 'Part. payée',    color: '#d97706' },
-  Soldée:             { label: 'Soldée',         color: '#16a34a' },
-  Annulée:            { label: 'Annulée',        color: '#6b7280' },
+  Soldée:             { label: 'Soldee',         color: '#16a34a' },
+  Annulée:            { label: 'Annulee',        color: '#6b7280' },
 }
 
 // ── Sections ──────────────────────────────────────────────────────────────────

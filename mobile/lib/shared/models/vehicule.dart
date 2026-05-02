@@ -12,10 +12,10 @@ class VehiculeResume {
   String get label => '$marque $modele';
 
   factory VehiculeResume.fromJson(Map<String, dynamic> json) => VehiculeResume(
-        id: json['id'] as String,
-        immatriculation: json['immatriculation'] as String,
-        marque: json['marque'] as String,
-        modele: json['modele'] as String,
+        id: (json['id'] ?? '').toString(),
+        immatriculation: (json['immatriculation'] ?? '').toString(),
+        marque: (json['marque'] ?? '').toString(),
+        modele: (json['modele'] ?? json['modèle'] ?? '').toString(),
       );
 }
 
@@ -40,14 +40,14 @@ class Vehicule {
   final String? carburant;
 
   factory Vehicule.fromJson(Map<String, dynamic> json) => Vehicule(
-        id: json['id'] as String,
-        immatriculation: json['immatriculation'] as String,
-        marque: json['marque'] as String,
-        modele: json['modele'] as String,
-        clientId: json['clientId'] as String,
+        id: (json['id'] ?? '').toString(),
+        immatriculation: (json['immatriculation'] ?? '').toString(),
+        marque: (json['marque'] ?? '').toString(),
+        modele: (json['modele'] ?? json['modèle'] ?? '').toString(),
+        clientId: (json['clientId'] ?? '').toString(),
         annee: json['annee'] as int?,
-        kilometrage: json['kilometrage'] as int?,
-        carburant: json['carburant'] as String?,
+        kilometrage: (json['kilométrage'] ?? json['kilometrage']) as int?,
+        carburant: json['carburant']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {

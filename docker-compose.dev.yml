@@ -26,9 +26,12 @@ services:
       target: deps              # only install node_modules, skip build
     volumes:
       - ./frontend:/app
-      - /app/node_modules       # anonymous volume to isolate host node_modules
+      - web_node_modules:/app/node_modules  # named volume keeps Linux binaries isolated from Windows host
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
       - "5173:5173"             # Vite HMR port
     environment:
       VITE_API_URL: http://api:8080
+
+volumes:
+  web_node_modules:

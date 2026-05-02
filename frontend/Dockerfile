@@ -2,8 +2,13 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci && \
+    npm install \
+      @rollup/rollup-linux-x64-musl \
+      lightningcss-linux-x64-musl \
+      @tailwindcss/oxide-linux-x64-musl \
+      --no-save 2>/dev/null || true
 
 # ─── Stage 2: build Vite app ──────────────────────────────────────────────────
 FROM deps AS builder

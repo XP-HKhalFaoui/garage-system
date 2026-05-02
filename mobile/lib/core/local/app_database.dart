@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+// Run: dart run build_runner build --delete-conflicting-outputs
 part 'app_database.g.dart';
 
 class CachedOrs extends Table {

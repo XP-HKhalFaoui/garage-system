@@ -1,8 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:flutter_test/flutter_test.dart",
-    "package:garage_app/core/utils/currency_formatter.dart",
-    "package:garage_app/core/utils/date_formatter.dart"
-  ]
-}

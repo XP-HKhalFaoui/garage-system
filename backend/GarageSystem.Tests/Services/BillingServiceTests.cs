@@ -211,7 +211,7 @@ public class BillingServiceTests : IDisposable
         result.Should().NotBeNull();
         result.Numéro.Should().StartWith("FAC-");
         result.TotalTTC.Should().Be(2380);
-        result.Statut.Should().Be(FactureStatut.Émise);
+        result.Statut.Should().Be(FactureStatut.Emise);
 
         var or = await _db.OrdresReparation.FirstAsync();
         or.Statut.Should().Be(ORStatut.Livré);
@@ -249,7 +249,7 @@ public class BillingServiceTests : IDisposable
             MontantTVA  = totalTTC - totalTTC / 1.19m,
             DateFacture  = DateTime.UtcNow,
             DateEchéance = DateTime.UtcNow.AddDays(30),
-            Statut = FactureStatut.Émise,
+            Statut = FactureStatut.Emise,
         };
         _db.Factures.Add(f);
         await _db.SaveChangesAsync();
@@ -264,7 +264,7 @@ public class BillingServiceTests : IDisposable
 
         var result = await _sut.EnregistrerPaiementAsync(f.Id, dto, "user-1");
 
-        result.Statut.Should().Be(FactureStatut.Soldée);
+        result.Statut.Should().Be(FactureStatut.Soldee);
         result.MontantDéjàPayé.Should().Be(2380);
         result.RestantDû.Should().Be(0);
     }
@@ -277,7 +277,7 @@ public class BillingServiceTests : IDisposable
 
         var result = await _sut.EnregistrerPaiementAsync(f.Id, dto, "user-1");
 
-        result.Statut.Should().Be(FactureStatut.PartiellemntPayée);
+        result.Statut.Should().Be(FactureStatut.PartiellementPayee);
         result.MontantDéjàPayé.Should().Be(1000);
         result.RestantDû.Should().Be(1380);
     }
@@ -306,7 +306,7 @@ public class BillingServiceTests : IDisposable
     public async Task EnregistrerPaiement_FactureSoldée_LeveConflictException()
     {
         var f = await SeedFactureÉmiseAsync();
-        f.Statut = FactureStatut.Soldée;
+        f.Statut = FactureStatut.Soldee;
         await _db.SaveChangesAsync();
         var dto = new EnregistrerPaiementDto(100, ModePaiement.Espèces, null, DateTime.UtcNow.Date);
 
@@ -324,7 +324,7 @@ public class BillingServiceTests : IDisposable
         await _sut.AnnulerFactureAsync(f.Id, "Erreur de saisie");
 
         var updated = await _db.Factures.FindAsync(f.Id);
-        updated!.Statut.Should().Be(FactureStatut.Annulée);
+        updated!.Statut.Should().Be(FactureStatut.Annulee);
         updated.MotifsAnnulation.Should().Be("Erreur de saisie");
     }
 
@@ -332,7 +332,7 @@ public class BillingServiceTests : IDisposable
     public async Task AnnulerFacture_DéjàAnnulée_LeveBusinessRuleException()
     {
         var f = await SeedFactureÉmiseAsync();
-        f.Statut = FactureStatut.Annulée;
+        f.Statut = FactureStatut.Annulee;
         await _db.SaveChangesAsync();
 
         var act = async () => await _sut.AnnulerFactureAsync(f.Id, "motif");

@@ -137,7 +137,7 @@ class _FactureCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(facture.client.nom),
+              Text(facture.clientNom),
               const SizedBox(height: 8),
               Row(
                 children: [

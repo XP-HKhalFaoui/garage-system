@@ -30,7 +30,7 @@ export interface DevisResponse {
 
 // ── Factures ──────────────────────────────────────────────────────────────────
 export type FactureStatut =
-  | 'Émise' | 'PartiellemntPayée' | 'Soldée' | 'Annulée'
+  | 'Emise' | 'PartiellementPayee' | 'Soldee' | 'Annulee'
 
 export type ModePaiement = 'Espèces' | 'Virement' | 'Chèque' | 'CB'
 

@@ -19,7 +19,7 @@ public class Facture : BaseEntity
     public decimal MontantTVA { get; set; }
     public decimal TotalTTC { get; set; }
     public decimal MontantDéjàPayé { get; set; }
-    public FactureStatut Statut { get; set; } = FactureStatut.Émise;
+    public FactureStatut Statut { get; set; } = FactureStatut.Emise;
     public string? MotifsAnnulation { get; set; }
 
     public ICollection<LigneFacture> Lignes { get; set; } = new List<LigneFacture>();

@@ -188,7 +188,7 @@ public class BillingService(ApplicationDbContext db)
                 SousTotalHT    = devis.SousTotalHT,
                 MontantTVA     = devis.MontantTVA,
                 TotalTTC       = devis.TotalTTC,
-                Statut         = FactureStatut.Émise,
+                Statut         = FactureStatut.Emise,
                 Lignes         = lignes,
             };
 
@@ -262,7 +262,7 @@ public class BillingService(ApplicationDbContext db)
                 SousTotalHT   = sousTotalHT,
                 MontantTVA    = montantTVA,
                 TotalTTC      = totalTTC,
-                Statut        = FactureStatut.Émise,
+                Statut        = FactureStatut.Emise,
                 Lignes        = lignes,
             };
 
@@ -347,7 +347,7 @@ public class BillingService(ApplicationDbContext db)
                 f.DateFacture, f.DateEchéance,
                 f.ClientNom, immat,
                 f.TotalTTC, f.MontantDéjàPayé, restant,
-                f.Statut == FactureStatut.Émise && f.DateEchéance < today);
+                f.Statut == FactureStatut.Emise && f.DateEchéance < today);
         }).ToList();
 
         return (summaries, total);
@@ -361,7 +361,7 @@ public class BillingService(ApplicationDbContext db)
             var facture = await db.Factures.FindAsync(factureId)
                 ?? throw new NotFoundException(nameof(Facture), factureId);
 
-            if (facture.Statut is not (FactureStatut.Émise or FactureStatut.PartiellemntPayée))
+            if (facture.Statut is not (FactureStatut.Emise or FactureStatut.PartiellementPayee))
                 throw new ConflictException($"Impossible d'enregistrer un paiement sur une facture {facture.Statut}.");
 
             var restant = facture.TotalTTC - facture.MontantDéjàPayé;
@@ -384,10 +384,10 @@ public class BillingService(ApplicationDbContext db)
 
             facture.MontantDéjàPayé += dto.Montant;
             facture.Statut = facture.MontantDéjàPayé >= facture.TotalTTC
-                ? FactureStatut.Soldée
-                : FactureStatut.PartiellemntPayée;
+                ? FactureStatut.Soldee
+                : FactureStatut.PartiellementPayee;
 
-            if (facture.Statut == FactureStatut.Soldée)
+            if (facture.Statut == FactureStatut.Soldee)
                 facture.DateSolde = DateTime.UtcNow;
 
             await db.SaveChangesAsync();
@@ -406,10 +406,10 @@ public class BillingService(ApplicationDbContext db)
         var f = await db.Factures.FindAsync(id)
             ?? throw new NotFoundException(nameof(Facture), id);
 
-        if (f.Statut == FactureStatut.Annulée)
+        if (f.Statut == FactureStatut.Annulee)
             throw new BusinessRuleException("Cette facture est déjà annulée.");
 
-        f.Statut           = FactureStatut.Annulée;
+        f.Statut           = FactureStatut.Annulee;
         f.MotifsAnnulation = motif;
         await db.SaveChangesAsync();
     }
@@ -436,7 +436,7 @@ public class BillingService(ApplicationDbContext db)
             .ToListAsync();
 
         var soldées = await db.Factures
-            .CountAsync(f => f.Statut == FactureStatut.Soldée && f.DateSolde.HasValue
+            .CountAsync(f => f.Statut == FactureStatut.Soldee && f.DateSolde.HasValue
                            && f.DateSolde.Value >= todayStart && f.DateSolde.Value < todayEnd);
 
         return new RecapCaisseDto(
@@ -455,14 +455,14 @@ public class BillingService(ApplicationDbContext db)
         var today      = now.Date;
 
         var factures = await db.Factures
-            .Where(f => f.Statut != FactureStatut.Annulée && f.DateFacture >= debutMois)
+            .Where(f => f.Statut != FactureStatut.Annulee && f.DateFacture >= debutMois)
             .ToListAsync();
 
         var caMois     = factures.Sum(f => f.TotalTTC);
         var encaissé   = factures.Sum(f => f.MontantDéjàPayé);
         var reste      = factures.Sum(f => f.TotalTTC - f.MontantDéjàPayé);
         var retard     = await db.Factures
-            .CountAsync(f => f.Statut == FactureStatut.Émise && f.DateEchéance < today);
+            .CountAsync(f => f.Statut == FactureStatut.Emise && f.DateEchéance < today);
 
         return new StatsBillingDto(caMois, encaissé, reste, retard);
     }

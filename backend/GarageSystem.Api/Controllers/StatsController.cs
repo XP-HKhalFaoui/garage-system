@@ -25,4 +25,10 @@ public class StatsController(StatsService svc) : ControllerBase
     [HttpGet("stock-rotation")]
     public async Task<IActionResult> StockRotation()
         => Ok(await svc.GetStatsStockAsync());
+
+    /// <summary>Mobile — récap de la journée en cours.</summary>
+    [HttpGet("recap-journee")]
+    [Authorize] // tous rôles (technicien mobile inclus)
+    public async Task<IActionResult> RecapJournee()
+        => Ok(await svc.GetRecapJourneeAsync());
 }

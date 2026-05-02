@@ -5,6 +5,7 @@ import '../../core/auth/token_storage.dart';
 import '../../core/api/auth_interceptor.dart';
 import '../../core/api/api_client.dart';
 import '../../shared/models/user_model.dart';
+import '../../core/config/app_config.dart';
 
 class AuthState {
   const AuthState({
@@ -35,7 +36,12 @@ class AuthState {
 
 final tokenStorageProvider = Provider<TokenStorage>((_) => TokenStorage());
 
-final _rawDioProvider = Provider<Dio>((_) => Dio());
+final _rawDioProvider = Provider<Dio>((_) => Dio(BaseOptions(
+      baseUrl: AppConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {'Content-Type': 'application/json'},
+    )));
 
 final authServiceProvider = Provider<AuthService>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);

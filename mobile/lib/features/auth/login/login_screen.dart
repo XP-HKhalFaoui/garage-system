@@ -10,8 +10,8 @@ class LoginScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final emailCtrl = useTextEditingController();
-    final passwordCtrl = useTextEditingController();
+    final emailCtrl = useTextEditingController(text: 'admin@garage.local');
+    final passwordCtrl = useTextEditingController(text: 'Admin1234!');
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final isLoading = useState(false);
     final errorMessage = useState<String?>(null);
@@ -34,11 +34,13 @@ class LoginScreen extends HookConsumerWidget {
           }
         }
       } on AppException catch (e) {
-        errorMessage.value = e.userMessage;
+        if (context.mounted) errorMessage.value = e.userMessage;
       } catch (e) {
-        errorMessage.value = 'Erreur de connexion. Vérifiez vos identifiants.';
+        if (context.mounted) {
+          errorMessage.value = 'Erreur de connexion. Vérifiez vos identifiants.';
+        }
       } finally {
-        isLoading.value = false;
+        if (context.mounted) isLoading.value = false;
       }
     }
 

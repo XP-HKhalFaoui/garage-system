@@ -22,14 +22,25 @@ class UserModel {
       roles.contains('Admin') || roles.contains('Caissier');
   bool get isTechnicien => roles.contains('Technicien');
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] as String,
-        email: json['email'] as String,
-        roles: List<String>.from(json['roles'] as List),
-        employeId: json['employeId'] as String?,
-        prenom: json['prenom'] as String?,
-        nom: json['nom'] as String?,
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Handle both single string role and list of roles
+    final rolesData = json['roles'] ?? json['role'];
+    List<String> rolesList = [];
+    if (rolesData is String) {
+      rolesList = [rolesData];
+    } else if (rolesData is List) {
+      rolesList = List<String>.from(rolesData);
+    }
+
+    return UserModel(
+      id: (json['id'] ?? json['sub'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      roles: rolesList,
+      employeId: json['employeId']?.toString(),
+      prenom: json['prenom']?.toString(),
+      nom: json['nom']?.toString(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

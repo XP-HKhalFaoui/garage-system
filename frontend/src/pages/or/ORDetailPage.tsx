@@ -6,7 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import {
-  ArrowLeft, UserPlus, Wrench, Trash2, Plus, Phone, Car, User, ChevronRight, FileText,
+  ArrowLeft, UserPlus, Wrench, Trash2, Plus, Phone, Car, User,
+  ChevronRight, FileText, Play, PauseCircle, CheckCircle2, PackageCheck,
+  XCircle, RotateCcw, Check,
 } from 'lucide-react'
 import { orService } from '@/services/orService'
 import { stockService } from '@/services/stockService'
@@ -37,39 +39,92 @@ import httpClient from '@/services/httpClient'
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const STATUT_LABELS: Record<ORStatut, string> = {
-  EnAttente: 'En attente',
-  EnCours: 'En cours',
-  Suspendu: 'Suspendu',
-  TerminéTechnicien: 'Terminé technicien',
-  Livré: 'Livré',
-  Annulé: 'Annulé',
+  EnAttente:          'En attente',
+  EnCours:            'En cours',
+  Suspendu:           'Suspendu',
+  TerminéTechnicien:  'Terminé technicien',
+  Livré:              'Livré',
+  Annulé:             'Annulé',
 }
 
 const STATUT_COLORS: Record<ORStatut, string> = {
-  EnAttente: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  EnCours: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  Suspendu: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
-  TerminéTechnicien: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  Livré: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  Annulé: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+  EnAttente:          'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  EnCours:            'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+  Suspendu:           'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
+  TerminéTechnicien:  'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
+  Livré:              'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  Annulé:             'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
 }
 
 const TRANSITIONS: Record<ORStatut, ORStatut[]> = {
-  EnAttente: ['EnCours', 'Annulé'],
-  EnCours: ['Suspendu', 'TerminéTechnicien'],
-  Suspendu: ['EnCours', 'Annulé'],
-  TerminéTechnicien: ['Livré'],
-  Livré: [],
-  Annulé: [],
+  EnAttente:          ['EnCours', 'Annulé'],
+  EnCours:            ['Suspendu', 'TerminéTechnicien'],
+  Suspendu:           ['EnCours', 'Annulé'],
+  TerminéTechnicien:  ['Livré'],
+  Livré:              [],
+  Annulé:             [],
+}
+
+// Main workflow steps (linear progression shown in stepper)
+const WORKFLOW_STEPS: ORStatut[] = ['EnAttente', 'EnCours', 'TerminéTechnicien', 'Livré']
+
+// Config for each transition button
+type TransitionCfg = {
+  label: string
+  shortLabel: string
+  icon: React.ElementType
+  className: string        // button style
+  requiresComment?: boolean
+  isDestructive?: boolean
+}
+
+const TRANSITION_BTN: Record<ORStatut, TransitionCfg> = {
+  EnCours: {
+    label: 'Démarrer la réparation',
+    shortLabel: 'Démarrer',
+    icon: Play,
+    className: 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600',
+  },
+  Suspendu: {
+    label: 'Suspendre le travail',
+    shortLabel: 'Suspendre',
+    icon: PauseCircle,
+    className: 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500',
+    requiresComment: true,
+  },
+  TerminéTechnicien: {
+    label: 'Terminer (côté technicien)',
+    shortLabel: 'Terminer',
+    icon: CheckCircle2,
+    className: 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600',
+  },
+  Livré: {
+    label: 'Marquer comme livré',
+    shortLabel: 'Livrer',
+    icon: PackageCheck,
+    className: 'bg-green-600 hover:bg-green-700 text-white border-green-600',
+  },
+  EnAttente: {
+    label: 'Remettre en attente',
+    shortLabel: 'En attente',
+    icon: RotateCcw,
+    className: 'bg-slate-600 hover:bg-slate-700 text-white border-slate-600',
+  },
+  Annulé: {
+    label: "Annuler l'OR",
+    shortLabel: 'Annuler',
+    icon: XCircle,
+    className: 'border border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 bg-transparent',
+    isDestructive: true,
+  },
 }
 
 const fmt = (n: number) => new Intl.NumberFormat('fr-DZ').format(n) + ' DA'
 
 // ── Schémas Zod ────────────────────────────────────────────────────────────────
 
-const statutSchema = z.object({
-  nouveauStatut: z.string().min(1),
-  commentaire: z.string().optional(),
+const commentSchema = z.object({
+  commentaire: z.string().min(1, 'Commentaire requis pour une suspension'),
 })
 
 const ligneSchema = z.object({
@@ -123,71 +178,215 @@ function HistoriqueTimeline({ or }: { or: ORDetail }) {
   )
 }
 
-// ── Modale : Changer statut ────────────────────────────────────────────────────
+// ── Stepper de workflow ────────────────────────────────────────────────────────
 
-function ChangerStatutModal({
+function WorkflowStepper({ statut }: { statut: ORStatut }) {
+  const isCancelled = statut === 'Annulé'
+  const isSuspended = statut === 'Suspendu'
+
+  const currentIdx = WORKFLOW_STEPS.indexOf(
+    isCancelled || isSuspended ? 'EnCours' : statut
+  )
+
+  const stepColors: Record<ORStatut, { ring: string; bg: string; text: string; line: string }> = {
+    EnAttente:         { ring: 'ring-amber-400',  bg: 'bg-amber-400',  text: 'text-amber-700',  line: 'bg-amber-400'  },
+    EnCours:           { ring: 'ring-blue-500',   bg: 'bg-blue-500',   text: 'text-blue-700',   line: 'bg-blue-500'   },
+    TerminéTechnicien: { ring: 'ring-purple-500', bg: 'bg-purple-500', text: 'text-purple-700', line: 'bg-purple-500' },
+    Livré:             { ring: 'ring-green-500',  bg: 'bg-green-500',  text: 'text-green-700',  line: 'bg-green-500'  },
+    Suspendu:          { ring: 'ring-amber-400',  bg: 'bg-amber-400',  text: 'text-amber-700',  line: 'bg-amber-400'  },
+    Annulé:            { ring: 'ring-red-400',    bg: 'bg-red-400',    text: 'text-red-700',    line: 'bg-red-400'    },
+  }
+
+  return (
+    <div className="w-full">
+      {/* Special banners for terminal / side states */}
+      {isCancelled && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+          <XCircle className="h-4 w-4 shrink-0" />
+          Cet ordre de réparation a été <strong className="ml-1">annulé</strong>.
+        </div>
+      )}
+      {isSuspended && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400">
+          <PauseCircle className="h-4 w-4 shrink-0" />
+          Travaux <strong className="ml-1">suspendus</strong> — en attente de reprise.
+        </div>
+      )}
+
+      {/* Stepper */}
+      <div className="flex items-center w-full">
+        {WORKFLOW_STEPS.map((step, idx) => {
+          const isDone    = !isCancelled && idx < currentIdx
+          const isCurrent = !isCancelled && idx === currentIdx
+          const isPending = isCancelled || idx > currentIdx
+          const cfg       = stepColors[step]
+
+          return (
+            <div key={step} className="flex items-center flex-1 last:flex-none">
+              {/* Circle */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className={cn(
+                  'h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 transition-all',
+                  isDone    && `${cfg.bg} ring-transparent text-white`,
+                  isCurrent && `bg-white ${cfg.ring} ${cfg.text} ring-2 shadow-md`,
+                  isPending && 'bg-muted ring-border text-muted-foreground',
+                )}>
+                  {isDone ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <span>{idx + 1}</span>
+                  )}
+                </div>
+                <span className={cn(
+                  'text-xs font-medium whitespace-nowrap',
+                  isDone    && cfg.text,
+                  isCurrent && `${cfg.text} font-semibold`,
+                  isPending && 'text-muted-foreground',
+                )}>
+                  {STATUT_LABELS[step]}
+                </span>
+              </div>
+
+              {/* Connector line */}
+              {idx < WORKFLOW_STEPS.length - 1 && (
+                <div className={cn(
+                  'h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all',
+                  isDone ? cfg.line : 'bg-border',
+                )}>
+                  {isSuspended && idx === 1 && (
+                    <div className="h-full bg-amber-300 rounded-full" />
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Boutons d'action statut ────────────────────────────────────────────────────
+
+function StatusActionButtons({
+  or,
+  onSuspend,
+  onTransition,
+  isPending,
+}: {
+  or: ORDetail
+  onSuspend: () => void
+  onTransition: (statut: ORStatut) => void
+  isPending: boolean
+}) {
+  const transitions = TRANSITIONS[or.statut]
+  if (transitions.length === 0) return null
+
+  const mainTransitions = transitions.filter(s => s !== 'Annulé')
+  const cancelTransition = transitions.includes('Annulé')
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* Primary / secondary transitions */}
+      {mainTransitions.map(targetStatut => {
+        const cfg = TRANSITION_BTN[targetStatut]
+        const Icon = cfg.icon
+        return (
+          <Button
+            key={targetStatut}
+            size="sm"
+            disabled={isPending}
+            className={cn('gap-1.5 font-semibold shadow-sm', cfg.className)}
+            onClick={() => cfg.requiresComment ? onSuspend() : onTransition(targetStatut)}
+          >
+            <Icon className="h-4 w-4" />
+            {cfg.shortLabel}
+          </Button>
+        )
+      })}
+
+      {/* Separator before destructive */}
+      {cancelTransition && mainTransitions.length > 0 && (
+        <div className="h-6 w-px bg-border mx-1" />
+      )}
+
+      {/* Annuler (destructive, always last) */}
+      {cancelTransition && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isPending}
+          className={cn('gap-1.5', TRANSITION_BTN['Annulé'].className)}
+          onClick={() => onTransition('Annulé')}
+        >
+          <XCircle className="h-4 w-4" />
+          Annuler l'OR
+        </Button>
+      )}
+    </div>
+  )
+}
+
+// ── Modale : Commentaire de suspension ────────────────────────────────────────
+
+function SuspendreModal({
   or, open, onClose,
 }: { or: ORDetail; open: boolean; onClose: () => void }) {
   const qc = useQueryClient()
-  const transitions = TRANSITIONS[or.statut]
-
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
-    resolver: zodResolver(statutSchema),
-    defaultValues: { nouveauStatut: transitions[0] ?? '', commentaire: '' },
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(commentSchema),
+    defaultValues: { commentaire: '' },
   })
 
   const mutation = useMutation({
-    mutationFn: (data: { nouveauStatut: string; commentaire?: string }) =>
-      orService.changerStatut(or.id, data.nouveauStatut as ORStatut, data.commentaire),
+    mutationFn: (data: { commentaire: string }) =>
+      orService.changerStatut(or.id, 'Suspendu', data.commentaire),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['or', or.id] })
       qc.invalidateQueries({ queryKey: ['or', 'today'] })
-      toast.success('Statut mis à jour')
+      toast.success('Travaux suspendus')
       reset()
       onClose()
     },
     onError: (e: any) => toast.error(e.response?.data?.detail ?? 'Erreur'),
   })
 
-  const nouveauStatut = watch('nouveauStatut') as ORStatut
-  const needsComment = nouveauStatut === 'Suspendu'
-
-  if (transitions.length === 0) return null
-
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
+    <Dialog open={open} onOpenChange={v => { if (!v) { reset(); onClose() } }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Changer le statut</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <PauseCircle className="h-5 w-5 text-amber-500" />
+            Suspendre les travaux
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="space-y-4 pt-2">
-          <div className="space-y-1.5">
-            <Label>Nouveau statut</Label>
-            <select
-              {...register('nouveauStatut')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            >
-              {transitions.map(s => (
-                <option key={s} value={s}>{STATUT_LABELS[s]}</option>
-              ))}
-            </select>
-          </div>
+        <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="space-y-4 pt-1">
           <div className="space-y-1.5">
             <Label>
-              Commentaire {needsComment && <span className="text-destructive">*</span>}
+              Motif de suspension <span className="text-destructive">*</span>
             </Label>
             <Textarea
               {...register('commentaire')}
-              placeholder={needsComment ? 'Obligatoire pour une suspension' : 'Optionnel'}
+              placeholder="Ex : En attente d'une pièce, client à rappeler…"
               rows={3}
+              autoFocus
             />
             {errors.commentaire && (
               <p className="text-destructive text-xs">{errors.commentaire.message}</p>
             )}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
-            <Button type="submit" disabled={mutation.isPending}>Confirmer</Button>
+            <Button type="button" variant="outline" onClick={() => { reset(); onClose() }}>
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              <PauseCircle className="h-4 w-4 mr-1.5" />
+              Confirmer la suspension
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -392,14 +591,24 @@ export default function ORDetailPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
 
-  const [statutOpen, setStatutOpen] = useState(false)
+  const [suspendOpen, setSuspendOpen]   = useState(false)
   const [assignerOpen, setAssignerOpen] = useState(false)
-  const [ligneOpen, setLigneOpen] = useState(false)
+  const [ligneOpen, setLigneOpen]       = useState(false)
 
   const { data: or, isLoading, isError } = useQuery<ORDetail>({
     queryKey: ['or', id],
     queryFn: () => orService.getById(id!),
     enabled: !!id,
+  })
+
+  const transitionMutation = useMutation({
+    mutationFn: (statut: ORStatut) => orService.changerStatut(or!.id, statut),
+    onSuccess: (_data, statut) => {
+      qc.invalidateQueries({ queryKey: ['or', id] })
+      qc.invalidateQueries({ queryKey: ['or', 'today'] })
+      toast.success(`Statut mis à jour → ${STATUT_LABELS[statut]}`)
+    },
+    onError: (e: any) => toast.error(e.response?.data?.detail ?? 'Erreur'),
   })
 
   const removeLigneMutation = useMutation({
@@ -441,7 +650,7 @@ export default function ORDetailPage() {
     </div>
   )
 
-  const canEdit = or.statut === 'EnCours'
+  const canEdit    = or.statut === 'EnCours'
   const transitions = TRANSITIONS[or.statut]
 
   return (
@@ -456,43 +665,67 @@ export default function ORDetailPage() {
             {or.priorité === 'Urgent' && (
               <Badge variant="destructive" className="text-xs">URGENT</Badge>
             )}
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               Ouvert le {new Date(or.dateOuverture).toLocaleString('fr-DZ')}
             </span>
           </span>
         }
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/or/kanban')}>
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Kanban
-            </Button>
-            {(!or.technicien && transitions.length > 0) && (
-              <Button variant="outline" size="sm" onClick={() => setAssignerOpen(true)}>
-                <UserPlus className="h-4 w-4 mr-1.5" />
-                Assigner
-              </Button>
-            )}
-            {or.statut === 'TerminéTechnicien' && !or.factureId && (
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white"
-                disabled={genererFactureMutation.isPending || or.lignes.length === 0}
-                onClick={() => genererFactureMutation.mutate()}
-              >
-                <FileText className="h-4 w-4 mr-1.5" />
-                {genererFactureMutation.isPending ? 'Génération…' : 'Générer la facture'}
-              </Button>
-            )}
-            {transitions.length > 0 && (
-              <Button size="sm" onClick={() => setStatutOpen(true)}>
-                <Wrench className="h-4 w-4 mr-1.5" />
-                Changer statut
-              </Button>
-            )}
-          </div>
+          <Button variant="outline" size="sm" onClick={() => navigate('/or/kanban')}>
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Kanban
+          </Button>
         }
       />
+
+      {/* ── Gestion du statut ── */}
+      <Card className="border-2 border-dashed border-muted-foreground/20">
+        <CardContent className="pt-5 pb-5 space-y-5">
+
+          {/* Stepper */}
+          <WorkflowStepper statut={or.statut} />
+
+          {/* Actions */}
+          {(transitions.length > 0 || (!or.technicien && transitions.length > 0) || or.statut === 'TerminéTechnicien') && (
+            <>
+              <Separator />
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+
+                  {/* Assigner technicien */}
+                  {!or.technicien && transitions.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setAssignerOpen(true)}>
+                      <UserPlus className="h-4 w-4 mr-1.5" />
+                      Assigner technicien
+                    </Button>
+                  )}
+
+                  {/* Générer facture */}
+                  {or.statut === 'TerminéTechnicien' && !or.factureId && (
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white gap-1.5 font-semibold shadow-sm"
+                      disabled={genererFactureMutation.isPending || or.lignes.length === 0}
+                      onClick={() => genererFactureMutation.mutate()}
+                    >
+                      <FileText className="h-4 w-4" />
+                      {genererFactureMutation.isPending ? 'Génération…' : 'Générer la facture'}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Transition buttons */}
+                <StatusActionButtons
+                  or={or}
+                  onSuspend={() => setSuspendOpen(true)}
+                  onTransition={s => transitionMutation.mutate(s)}
+                  isPending={transitionMutation.isPending}
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Info cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -646,7 +879,6 @@ export default function ORDetailPage() {
             </Table>
           )}
 
-          {/* Total */}
           {or.lignes.length > 0 && (
             <>
               <Separator />
@@ -673,8 +905,8 @@ export default function ORDetailPage() {
       )}
 
       {/* Modales */}
-      <ChangerStatutModal or={or} open={statutOpen} onClose={() => setStatutOpen(false)} />
-      <AssignerModal or={or} open={assignerOpen} onClose={() => setAssignerOpen(false)} />
+      <SuspendreModal    or={or}  open={suspendOpen}  onClose={() => setSuspendOpen(false)} />
+      <AssignerModal     or={or}  open={assignerOpen} onClose={() => setAssignerOpen(false)} />
       <AjouterLigneModal orId={or.id} open={ligneOpen} onClose={() => setLigneOpen(false)} />
 
     </div>

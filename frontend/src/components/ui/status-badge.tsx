@@ -21,10 +21,10 @@ const statusBadgeVariants = cva(
 
         // Invoice statuses
         'invoice-Emise':            'bg-blue-100  text-blue-700  ring-blue-200  dark:bg-blue-900/50  dark:text-blue-300  dark:ring-blue-700',
-        'invoice-PartiellemntPayée':'bg-orange-100 text-orange-700 ring-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:ring-orange-700',
-        'invoice-Soldée':           'bg-green-100 text-green-700  ring-green-200  dark:bg-green-900/50  dark:text-green-300  dark:ring-green-700',
+        'invoice-PartiellementPayee':'bg-orange-100 text-orange-700 ring-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:ring-orange-700',
+        'invoice-Soldee':           'bg-green-100 text-green-700  ring-green-200  dark:bg-green-900/50  dark:text-green-300  dark:ring-green-700',
         'invoice-EnRetard':         'bg-red-100   text-red-700   ring-red-200    dark:bg-red-900/50    dark:text-red-300    dark:ring-red-700',
-        'invoice-Annulée':          'bg-slate-100 text-slate-500  ring-slate-200  dark:bg-slate-900/50  dark:text-slate-400  dark:ring-slate-700',
+        'invoice-Annulee':          'bg-slate-100 text-slate-500  ring-slate-200  dark:bg-slate-900/50  dark:text-slate-400  dark:ring-slate-700',
 
         // Leave request statuses
         'leave-EnAttente': 'bg-yellow-100 text-yellow-700 ring-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:ring-yellow-700',
@@ -47,11 +47,11 @@ const LABELS: Record<StatusBadgeVariant, string> = {
   'stock-ok':             'OK',
   'stock-low':            'Bas',
   'stock-critical':       'Critique',
-  'invoice-Emise':             'Émise',
-  'invoice-PartiellemntPayée': 'Partiel',
-  'invoice-Soldée':            'Soldée',
-  'invoice-EnRetard':          'En retard',
-  'invoice-Annulée':           'Annulée',
+  'invoice-Emise':              'Émise',
+  'invoice-PartiellementPayee': 'Partiel. payée',
+  'invoice-Soldee':             'Soldée',
+  'invoice-EnRetard':           'En retard',
+  'invoice-Annulee':            'Annulée',
   'leave-EnAttente': 'En attente',
   'leave-Approuvé':  'Approuvé',
   'leave-Refusé':    'Refusé',

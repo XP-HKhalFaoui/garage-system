@@ -33,7 +33,7 @@ public class ComptabiliteExportService
         // Factures émises → 411 / 706 / 44571
         var factures = await _db.Factures
             .Include(f => f.Lignes)
-            .Where(f => f.DateFacture >= début && f.DateFacture < fin && f.Statut != FactureStatut.Annulée)
+            .Where(f => f.DateFacture >= début && f.DateFacture < fin && f.Statut != FactureStatut.Annulee)
             .AsNoTracking()
             .ToListAsync();
 

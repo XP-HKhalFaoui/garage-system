@@ -645,7 +645,7 @@ export default function SociétéDetailPage() {
                       <TableCell className="text-right">{f.nbOR}</TableCell>
                       <TableCell className="text-right font-bold">{fmt(f.totalTTC)}</TableCell>
                       <TableCell>
-                        <Badge variant={f.statut === 'Soldée' ? 'default' : 'secondary'} className="text-xs">
+                        <Badge variant={f.statut === 'Soldee' ? 'default' : 'secondary'} className="text-xs">
                           {f.statut}
                         </Badge>
                         {f.dépassementPlafond && (

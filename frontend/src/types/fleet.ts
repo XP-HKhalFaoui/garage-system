@@ -1,5 +1,5 @@
 export type TypeTarif = 'TarifNormal' | 'PrixRéduit' | 'Forfait'
-export type FactureGroupéeStatut = 'Émise' | 'Soldée' | 'Annulée'
+export type FactureGroupéeStatut = 'Emise' | 'Soldee' | 'Annulee'
 
 export interface SociétéSummary {
   id: string
