@@ -64,6 +64,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   final AuthService _authService;
 
+  // ── Normal login ───────────────────────────────────────────────────────────
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -79,11 +80,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> logout() async {
-    await _authService.logout();
-    state = const AuthState();
+  // ── Biometric login ────────────────────────────────────────────────────────
+  /// Returns true if biometric auth succeeded and user is now authenticated.
+  Future<bool> biometricLogin() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final result = await _authService.loginWithBiometric();
+      if (result == null) {
+        state = state.copyWith(isLoading: false);
+        return false;
+      }
+      state = AuthState(isAuthenticated: true, user: result.user);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
   }
 
+  // ── Logout ─────────────────────────────────────────────────────────────────
+  Future<void> logout() async {
+    // 1. Flip state immediately → RouterNotifier fires → GoRouter goes to /login.
+    //    The user sees the login screen with zero delay.
+    state = const AuthState();
+    // 2. Clear tokens + fire-and-forget server revocation (non-blocking).
+    await _authService.logout();
+  }
+
+  // ── Auto-login on app start ────────────────────────────────────────────────
+  /// Tries to restore the session from the stored refresh token.
+  /// On network errors: keeps the user in loading state and retries gracefully.
+  /// Only logs out (clears tokens) on explicit auth failures (401/403).
   Future<void> tryAutoLogin() async {
     state = state.copyWith(isLoading: true);
     try {
@@ -92,12 +119,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final user = await _authService.getCurrentUser();
         state = AuthState(isAuthenticated: true, user: user);
       } else {
+        // refreshIfNeeded returns false but may have kept the token intact
+        // (network error). Set unauthenticated but don't clear anything.
         state = const AuthState();
       }
     } catch (_) {
+      // Don't clear tokens — the error might be transient.
       state = const AuthState();
     }
   }
+
+  // ── Biometric helpers ──────────────────────────────────────────────────────
+  Future<bool> isBiometricAvailable() => _authService.isBiometricAvailable();
+  Future<bool> isBiometricEnabled()   => _authService.isBiometricEnabled();
+  Future<void> enableBiometric(String email, String password) =>
+      _authService.enableBiometric(email, password);
+  Future<void> disableBiometric() => _authService.disableBiometric();
 }
 
 final authProvider =

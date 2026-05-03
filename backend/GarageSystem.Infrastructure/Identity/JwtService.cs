@@ -25,6 +25,8 @@ public class JwtService : IJwtService
             new(JwtRegisteredClaimNames.Email, user.Email!),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+        if (user.EmployeId.HasValue)
+            claims.Add(new Claim("employeId", user.EmployeId.Value.ToString()));
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
         var expMinutes = _config.GetValue<int>("Jwt:AccessTokenExpirationMinutes", 15);

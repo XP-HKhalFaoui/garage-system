@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../shared/models/client.dart';
 import '../../../shared/models/vehicule.dart';
-import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/providers/auth_provider.dart';

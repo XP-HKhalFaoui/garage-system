@@ -3,7 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/models/ordre_reparation.dart';
-import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';

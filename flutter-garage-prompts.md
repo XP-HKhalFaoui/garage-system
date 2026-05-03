@@ -905,6 +905,544 @@ Fixtures JSON dans test/fixtures/ (or_response.json, facture_response.json, etc.
 
 ---
 
+## Module 7 — Améliorations UX (P1 → P4)
+
+### 29-facture-detail-paiement.txt
+```
+Tu es un expert Flutter Riverpod. Crée l'écran de détail d'une facture avec encaissement.
+
+Fichier : lib/features/admin/facturation/facture_detail_screen.dart
+
+Le screen reçoit un String factureId via GoRouter path parameter.
+
+Provider :
+  factureDetailProvider : FutureProvider.autoDispose.family<Facture, String>
+    → GET /api/factures/{id}
+    Facture contient : id, numero, statut, dateFacture, dateEcheance, clientNom, vehiculeImmat,
+    sousTotalHT, montantTVA, totalTTC, montantDejaPaye, restantDu, lignes (List<LigneFacture>),
+    paiements (List<PaiementFacture>)
+
+Layout Scaffold :
+AppBar :
+  - Titre : numéro facture (ex : FAC-2025-0042)
+  - Badge statut en leading
+  - Menu ••• → [Télécharger PDF, Annuler facture (confirm dialog si statut != Soldée)]
+
+Body scrollable (SingleChildScrollView + Column) :
+
+1. _ClientVehiculeCard :
+   Card avec deux lignes :
+   - Icône person + clientNom (bold)
+   - Icône directions_car + vehiculeImmat + marque/modèle
+   Padding horizontal 16, borderRadius 12
+
+2. _LignesTable :
+   Titre section "Prestations" (bold 14sp, leftPadding 16)
+   Pour chaque LigneFacture → Row(
+     Expanded(description, overflow ellipsis),
+     SizedBox(width:40, child: Text('${qte}x', textAlign: right, color: black54)),
+     SizedBox(width:80, child: Text(formatDZD(puHT), textAlign: right)),
+     SizedBox(width:90, child: Text(formatDZD(totalHT), textAlign: right, bold))
+   )
+   Séparateur Divider fin entre chaque ligne
+   Pas de DataTable (trop rigide) — ListView.builder désactivé pour le scroll (shrinkWrap: true, physics: NeverScrollableScrollPhysics)
+
+3. _TotauxSection (aligné droite) :
+   Row "Sous-total HT" + formatDZD(sousTotalHT)
+   Row "TVA 19 %" + formatDZD(montantTVA)
+   Divider
+   Row bold large "Total TTC" + formatDZD(totalTTC)
+   Si restantDu > 0 :
+     Row rouge "Déjà payé" + formatDZD(montantDejaPaye)
+     Row rouge bold "Restant dû" + formatDZD(restantDu)
+
+4. _PaiementsSection :
+   Titre "Paiements enregistrés"
+   Si liste vide → Text("Aucun paiement", color: black38)
+   Sinon liste de chips :
+     Chip(
+       avatar: Icon(mode icon),
+       label: "${formatDZD(montant)} — ${formatDate(date)}",
+       backgroundColor: vert clair
+     )
+
+FAB "Encaisser" (FloatingActionButton.extended) :
+  Visible uniquement si statut != Soldée
+  Icon: payments, label: "Encaisser ${formatDZD(restantDu)}"
+  onPressed → showModalBottomSheet _EnregistrerPaiementSheet
+
+_EnregistrerPaiementSheet (ConsumerStatefulWidget) :
+  State : montantCtrl (pré-rempli restantDu), selectedMode, referenceCtrl
+  SegmentedButton<String> modes : Espèces | Virement | Chèque | CB
+  TextField montant (TextInputType.numberWithOptions(decimal:true))
+  TextField référence (visible si mode Virement ou Chèque)
+  Bouton "Valider paiement" :
+    → POST /api/factures/{id}/paiements { montant, mode, reference? }
+    → ref.invalidate(factureDetailProvider(factureId))
+    → Navigator.pop + SnackBar "Paiement enregistré"
+
+Téléchargement PDF :
+  → GET /api/factures/{id}/pdf (responseType: ResponseType.bytes)
+  → Stocker dans getTemporaryDirectory()/{numero}.pdf
+  → Ouvrir avec open_file package
+  → Afficher CircularProgressIndicator dans l'AppBar pendant le téléchargement
+```
+
+### 30-or-detail-technicien.txt
+```
+Tu es un expert Flutter Riverpod. Crée l'écran de détail OR pour le technicien.
+
+Fichier : lib/features/technicien/detail_or/detail_or_screen.dart
+
+Provider :
+  orDetailProvider : FutureProvider.autoDispose.family<OrdreReparation, String>(orId)
+    → GET /api/ordres-reparation/{id}
+  Expose : id, numero, statut, vehicule, client, technicien, diagnostic, lignes, historiqueStatuts, montantTotal
+
+AppBar :
+  - Titre : numéro OR
+  - Leading : back button
+  - Actions : badge StatutBadge(or.statut, small: true) en lecture seule
+  - Menu ••• → "Voir historique statuts" (ouvre BottomSheet liste des transitions)
+
+Body : SingleChildScrollView padding 16, Column :
+
+1. _VehiculeCard :
+   Container décoré (borderRadius 16, gradient léger bleu) :
+   - Immatriculation : Text(or.vehicule.immatriculation, fontSize: 22, bold, color: primary)
+   - Sous-ligne : "${or.vehicule.marque} ${or.vehicule.modele}" en gris
+   - Row : icône phone + or.client.nom (tappable → launch tel:)
+   - Badge type intervention (chip)
+
+2. _DiagnosticCard :
+   Titre "Diagnostic" + bouton crayon (si statut EnCours)
+   Si editMode (bool state) :
+     TextField multiline (minLines 3) pré-rempli
+     Row boutons : "Annuler" (outline) + "Sauvegarder" (filled) → PATCH /api/ordres-reparation/{id} { diagnostic }
+   Sinon :
+     Text(or.diagnostic ?? "Aucun diagnostic renseigné", color: diagnostic==null ? black38 : black87)
+
+3. _TimerSection :
+   Card avec ORTimerWidget (widget existant, paramétré depuis or.statut + or.heureDebut)
+   Sous le timer : label "Durée de l'intervention"
+
+4. _LignesSection :
+   Titre "Pièces & Main d'œuvre" + bouton "+" (si statut EnCours)
+   ListView.builder(shrinkWrap, NeverScrollable) :
+     _LigneTile : icon(Pièce=hardware / MO=build), description, "Qté x PU", total aligné droite
+     Swipe to delete (Dismissible) si statut EnCours → DELETE /api/ordres-reparation/{id}/lignes/{ligneId}
+   Si liste vide + EnCours : bouton outlined "Ajouter une pièce" centré
+
+5. _StatutActionsBar (sticky bas d'écran via Column + SizedBox.fromSize) :
+   Voir prompt 18-tech-statut-transitions.txt — intégrer ORStatutActions ici
+   Après chaque transition réussie : ref.invalidate(orDetailProvider(orId))
+
+Bouton "Ajouter pièce" → push /technicien/or/{id}/pieces
+```
+
+### 31-signalr-realtime-listener.txt
+```
+Tu es un expert Flutter SignalR + Riverpod. Ajoute l'écoute SignalR temps réel dans les screens admin et technicien.
+
+Contexte : SignalRService existe dans lib/core/api/signalr_service.dart.
+Le hub ASP.NET Core émet :
+  - "NotifyORCreated"     : { id, numéro, statut, timestamp }
+  - "NotifyORAssigned"    : { orId, numéro, technicien, timestamp }
+  - "NotifyORStatusChanged" : { orId, numéro, statut, timestamp }
+
+Étape 1 — Brancher dans file_attente_screen.dart :
+Dans le build() de FileAttenteScreen (ConsumerStatefulWidget) :
+  ref.listen(signalRProvider, (_, event) {
+    if (event == null) return;
+    ref.invalidate(fileAttenteProvider);           // recharge la liste
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(event.message),              // ex: "OR-2025-0012 → En cours"
+        backgroundColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  });
+
+Étape 2 — Brancher dans mes_or_screen.dart (technicien) :
+  Même logique, mais filtrer uniquement les événements qui concernent l'employé connecté :
+    if (event.technicienId != currentUser.employeId) return;
+  → invalider mesORProvider
+  → afficher notification locale via NotificationService.showORAssigned()
+
+Étape 3 — Badge temps réel sur la bottom nav :
+  Dans app_router.dart AdminShell :
+  - Ajouter orAlerteCountProvider : StreamProvider qui incrémente à chaque NotifyORCreated
+  - Afficher NavigationDestination avec badge(count) si count > 0 sur l'onglet "Atelier"
+  - Remettre à zéro quand l'utilisateur navigue vers cet onglet
+
+Étape 4 — Indicateur de connexion SignalR :
+  Widget _SignalRDot(Color) : Container 8x8 circle, vert si connecté, rouge si déconnecté
+  Placer en haut à droite de l'AppBar dans file_attente_screen et mes_or_screen
+  Écouter signalRProvider.connectionState
+```
+
+### 32-dashboard-chart.txt
+```
+Tu es un expert Flutter fl_chart + Riverpod. Ajoute un mini graphique CA au dashboard admin.
+
+Dépendance à ajouter dans pubspec.yaml : fl_chart: ^0.68.0
+
+Provider :
+  caHebdoProvider : FutureProvider.autoDispose<List<CaJour>>
+    → GET /api/stats/ca-semaine (retourne 7 jours glissants : [{ date, montant }])
+  Model CaJour : { DateTime date, double montant }
+
+Widget _CaChart (StatelessWidget) :
+  Paramètre : List<CaJour> data
+
+  BarChart(
+    BarChartData(
+      maxY: data.map((d) => d.montant).reduce(max) * 1.2,
+      barGroups: data.asMap().entries.map((e) =>
+        BarChartGroupData(x: e.key, barRods: [
+          BarChartRodData(
+            toY: e.value.montant,
+            color: e.key == 6 ? AppColors.primary : AppColors.primary.withOpacity(0.4),
+            width: 16,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+          )
+        ])
+      ).toList(),
+      titlesData: FlTitlesData(
+        bottomTitles: AxisTitles(sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: (v, _) => Text(
+            DateFormat('E', 'fr').format(data[v.toInt()].date),
+            style: TextStyle(fontSize: 10, color: Colors.black45),
+          ),
+        )),
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      ),
+      gridData: FlGridData(show: false),
+      borderData: FlBorderData(show: false),
+    ),
+  )
+
+Intégration dans dashboard_screen.dart :
+  Après la section KPI cards, ajouter :
+  Card(
+    margin: EdgeInsets.symmetric(horizontal: 16),
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("CA cette semaine", style: TextStyle(fontWeight: FontWeight.w700)),
+          SizedBox(height: 4),
+          ref.watch(caHebdoProvider).when(
+            data: (d) => SizedBox(height: 140, child: _CaChart(d)),
+            loading: () => SizedBox(height: 140, child: Center(child: CircularProgressIndicator())),
+            error: (_, __) => SizedBox(height: 60, child: Center(child: Text("Données indisponibles"))),
+          ),
+        ],
+      ),
+    ),
+  )
+```
+
+### 33-clients-search-filter.txt
+```
+Tu es un expert Flutter Riverpod. Améliore la liste des clients avec recherche avancée et filtres.
+
+Fichier : lib/features/admin/clients/clients_list_screen.dart (refactoring)
+
+Providers :
+  clientsProvider : FutureProvider.autoDispose.family<List<Client>, ClientsFilter>
+    → GET /api/clients?search=&type=&page=&pageSize=30
+  ClientsFilter : { String? search, String? type }  // type: "Particulier" | "Societe"
+
+Ajouts :
+
+1. SearchBar persistante en haut (SliverAppBar avec bottom) :
+   TextField avec prefixIcon search, suffixIcon clear
+   Debounce 400ms via Timer
+
+2. Row de filtres (chips horizontaux) :
+   FilterChip "Tous" | "Particulier" | "Société"
+   selected → couleur primaire remplie
+   onSelected → met à jour le filtre, invalide le provider
+
+3. ClientCard améliorée :
+   - Avatar coloré (couleur dérivée de nom.hashCode % AppColors.avatarPalette)
+     AppColors.avatarPalette = [ bleu, vert, violet, orange, teal ] (5 couleurs)
+   - Badge type : "Particulier" gris / "Société" bleu
+   - Sous-ligne : nb véhicules + nb OR actifs (chips compacts)
+   - Si client a un OR actif → border gauche orange 3px
+
+4. Tri :
+   PopupMenuButton dans l'AppBar :
+   "A → Z" | "Plus récents" | "CA décroissant"
+   Tri effectué côté client sur la liste retournée (pas de nouvel appel API)
+
+5. Pull-to-refresh : RefreshIndicator → ref.refresh(clientsProvider(filter).future)
+
+6. Infinite scroll :
+   ScrollController _ctrl
+   _ctrl.addListener(() { if (_ctrl.position.pixels > _ctrl.position.maxScrollExtent - 200) loadMore(); })
+   loadMore() → incrémenter page, concaténer résultats dans un StateProvider<List<Client>>
+```
+
+### 34-stock-badge-critique.txt
+```
+Tu es un expert Flutter Riverpod. Ajoute un badge rouge "articles critiques" sur l'icône Stock de la nav bar.
+
+Étape 1 — Provider :
+  stockCritiqueCountProvider : FutureProvider.autoDispose<int>
+    → GET /api/articles?stockBas=true&pageSize=1
+    → extraire le champ "total" de la réponse paginée (total items en stock bas)
+    Cache : keepAlive 5 minutes (ref.keepAlive() dans le provider)
+
+Étape 2 — Badge dans app_router.dart AdminShell :
+  Dans la liste _NavItem, pour l'item "Stock" :
+    Consumer(builder: (_, ref, __) {
+      final count = ref.watch(stockCritiqueCountProvider).valueOrNull ?? 0;
+      return NavigationDestination(
+        icon: Badge.count(count: count, isLabelVisible: count > 0,
+          child: Icon(Icons.inventory_2_outlined)),
+        selectedIcon: Badge.count(count: count, isLabelVisible: count > 0,
+          child: Icon(Icons.inventory_2)),
+        label: 'Stock',
+      );
+    })
+
+Étape 3 — Rafraîchissement :
+  Invalider stockCritiqueCountProvider quand une ligne OR de type Pièce est ajoutée :
+  Dans AddLigneAsync (consommer_pieces_screen.dart) après le POST réussi :
+    ref.invalidate(stockCritiqueCountProvider)
+  Et quand la page Stock devient visible :
+    @override void initState() { ref.invalidate(stockCritiqueCountProvider); }
+
+Étape 4 — Banner dans stock_screen.dart :
+  Si count > 0 → afficher en haut un Container rouge clair :
+    "⚠ {count} article(s) en stock critique — vérifier les approvisionnements"
+  Tappable → scroller jusqu'à la section des articles critiques (ScrollController + GlobalKey)
+```
+
+### 35-empty-states-contextuels.txt
+```
+Tu es un expert Flutter. Remplace les états vides génériques par des états contextuels avec CTA.
+
+Fichier : lib/shared/widgets/empty_state_widget.dart (refactoring)
+
+Widget EmptyStateWidget :
+  Paramètres : {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    String? actionLabel,
+    VoidCallback? onAction,
+    Color? iconColor,
+  }
+
+Layout centré (Column mainAxisAlignment.center) :
+  - Container(60x60, decoration: BoxDecoration(color: iconColor?.withOpacity(0.1), shape: BoxShape.circle))
+      → Icon(icon, size: 32, color: iconColor ?? Colors.black26)
+  - SizedBox(height: 16)
+  - Text(title, fontSize: 16, fontWeight.w600, textAlign.center)
+  - Si subtitle != null : Text(subtitle, fontSize: 13, color: black45, textAlign.center)
+  - Si actionLabel != null :
+      SizedBox(height: 20)
+      FilledButton.tonal(onPressed: onAction, child: Text(actionLabel))
+
+Remplacer dans chaque screen :
+
+factures_list_screen.dart :
+  EmptyStateWidget(
+    icon: Icons.receipt_long_outlined,
+    title: "Aucune facture",
+    subtitle: "Les factures générées depuis les OR apparaîtront ici",
+    iconColor: AppColors.primary,
+  )
+
+file_attente_screen.dart (par onglet) :
+  EnAttente → EmptyStateWidget(icon: Icons.hourglass_empty, title: "Aucun OR en attente",
+    subtitle: "Tout est sous contrôle !", iconColor: AppColors.warning)
+  EnCours → EmptyStateWidget(icon: Icons.check_circle_outline, title: "Aucune intervention en cours",
+    iconColor: AppColors.success)
+  Tous (global) → EmptyStateWidget(icon: Icons.car_repair, title: "Atelier vide aujourd'hui",
+    subtitle: "Créez un OR pour commencer", actionLabel: "Créer un OR",
+    onAction: () => context.push('/admin/nouvel-or'), iconColor: AppColors.primary)
+
+clients_list_screen.dart :
+  EmptyStateWidget(icon: Icons.people_outline, title: "Aucun client",
+    subtitle: "Ajoutez votre premier client pour commencer",
+    actionLabel: "Nouveau client", onAction: () => _showNewClientSheet(context),
+    iconColor: AppColors.primary)
+
+mes_or_screen.dart (technicien) :
+  EmptyStateWidget(icon: Icons.handyman_outlined, title: "Aucune intervention assignée",
+    subtitle: "Vos OR du jour apparaîtront ici", iconColor: AppColors.primary)
+```
+
+### 36-loading-skeletons.txt
+```
+Tu es un expert Flutter. Remplace les spinners de chargement par des squelettes animés (shimmer).
+
+Dépendance : shimmer: ^3.0.0 dans pubspec.yaml
+
+Fichier : lib/shared/widgets/skeleton_widgets.dart
+
+Helper _shimmer(Widget child) :
+  Shimmer.fromColors(
+    baseColor: Colors.grey[200]!,
+    highlightColor: Colors.grey[100]!,
+    child: child,
+  )
+
+Widget SkeletonFactureCard :
+  Container décoré comme _FactureCard mais avec des blocs gris à la place du texte :
+  - Bloc 120x14 (numéro) + bloc 60x12 (date) alignés en Row
+  - Bloc 200x12 (client)
+  - Bloc 100x18 (montant) + bloc 60x20 arrondi (badge)
+  Utiliser Container(width, height, color: Colors.white, borderRadius) wrappé dans _shimmer()
+
+Widget SkeletonORCard : idem structure ORKanbanCard
+
+Widget SkeletonListView({ int count = 5, Widget Function() itemBuilder }) :
+  ListView.separated(
+    shrinkWrap: true, physics: NeverScrollableScrollPhysics,
+    itemCount: count,
+    separatorBuilder: (_, __) => SizedBox(height: 10),
+    itemBuilder: (_, __) => itemBuilder(),
+  )
+
+Intégration dans AsyncValueWidget :
+  Modifier le paramètre loading pour accepter un Widget? :
+  loading → loading ?? SkeletonListView(count: 4, itemBuilder: () => SkeletonFactureCard())
+
+Utilisation :
+  factures_list_screen.dart :
+    AsyncValueWidget(
+      value: factures,
+      loading: SkeletonListView(count: 5, itemBuilder: () => const SkeletonFactureCard()),
+      data: (list) => ...
+    )
+  file_attente_screen.dart :
+    loading: SkeletonListView(count: 3, itemBuilder: () => const SkeletonORCard())
+```
+
+### 37-offline-resilience.txt
+```
+Tu es un expert Flutter Dio + Connectivity. Ajoute la résilience réseau (offline banner + retry).
+
+Dépendances : connectivity_plus: ^6.0.0, dio_retry: ^6.0.0 (ou implémenter manuellement)
+
+Étape 1 — ConnectivityService :
+  Fichier : lib/core/network/connectivity_service.dart
+  connectivityProvider : StreamProvider<ConnectivityResult>
+    → Connectivity().onConnectivityChanged
+
+  isOnlineProvider : Provider<bool>
+    → ref.watch(connectivityProvider).valueOrNull != ConnectivityResult.none
+
+Étape 2 — OfflineBanner widget :
+  Fichier : lib/shared/widgets/offline_banner.dart
+  Consumer qui écoute isOnlineProvider :
+  AnimatedCrossFade(
+    firstChild: SizedBox.shrink(),      // online
+    secondChild: Container(            // offline
+      color: Colors.red[700],
+      padding: EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+      child: Row([ Icon(Icons.wifi_off, size: 14, color: white), SizedBox(8),
+                   Text("Pas de connexion — mode hors ligne", color: white, fontSize: 12) ]),
+    ),
+    crossFadeState: isOnline ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+    duration: Duration(milliseconds: 300),
+  )
+  Ajouter dans AdminShell et TechnicienShell au-dessus du body principal.
+
+Étape 3 — Retry dans ApiClient :
+  Dans le DioException handler de api_client.dart :
+  Si type == DioExceptionType.connectionTimeout || connectionError :
+    Retry 2 fois avec délai exponentiel (500ms, 1500ms) avant de lever NetworkException
+  Si NetworkException → afficher dans AsyncValueWidget un message spécifique :
+    "Impossible de se connecter au serveur. Vérifiez votre connexion."
+    + bouton "Réessayer" → ref.refresh(provider)
+
+Étape 4 — Pull-to-refresh manquant :
+  Vérifier que RefreshIndicator est présent dans :
+  - factures_list_screen.dart ✓ (déjà fait)
+  - file_attente_screen.dart → ajouter onRefresh: () => ref.refresh(fileAttenteProvider.future)
+  - clients_list_screen.dart → ajouter onRefresh
+  - stock_screen.dart → ajouter onRefresh: () => ref.refresh(articlesProvider(filter).future)
+  - mes_or_screen.dart → ajouter onRefresh: () => ref.refresh(mesORProvider.future)
+```
+
+### 38-dark-mode.txt
+```
+Tu es un expert Flutter Material 3. Active le dark mode en suivant le thème système.
+
+Fichier : lib/core/theme/app_theme.dart
+
+1. Créer appDarkTheme : ThemeData :
+  ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.primarySeed,
+      brightness: Brightness.dark,
+    ),
+    scaffoldBackgroundColor: Color(0xFF0F1419),
+    cardColor: Color(0xFF1C2128),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Color(0xFF161B22),
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Color(0xFF21262D),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Color(0xFF30363D))),
+    ),
+  )
+
+2. Fichier : lib/core/theme/theme_provider.dart
+  themeModeProvider : StateProvider<ThemeMode>(() => ThemeMode.system)
+
+  Persister dans SharedPreferences :
+    themeModeNotifier : StateNotifier<ThemeMode>
+    - initState : lire prefs.getString('themeMode') → ThemeMode.values.byName(...)
+    - set(ThemeMode mode) → prefs.setString('themeMode', mode.name) + state = mode
+
+3. Dans garage_app.dart :
+  MaterialApp.router(
+    theme: appTheme,
+    darkTheme: appDarkTheme,
+    themeMode: ref.watch(themeModeProvider),
+    ...
+  )
+
+4. Toggle dans le menu Profil :
+  ListTile(
+    leading: Icon(Icons.brightness_6_rounded),
+    title: Text("Apparence"),
+    trailing: SegmentedButton<ThemeMode>(
+      segments: [
+        ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode, size: 16)),
+        ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto, size: 16)),
+        ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode, size: 16)),
+      ],
+      selected: {ref.watch(themeModeProvider)},
+      onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).set(s.first),
+    ),
+  )
+
+Note : les Containers avec couleurs hardcodées (AppColors.surface, AppColors.border)
+doivent utiliser Theme.of(context).colorScheme.surface et .outlineVariant respectivement
+pour que le dark mode s'applique automatiquement.
+```
+
+---
+
 ## Usage rapide avec Claude Code
 
 ```bash

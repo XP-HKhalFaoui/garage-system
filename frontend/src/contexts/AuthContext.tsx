@@ -26,9 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await authService.refreshToken()
         const me = await authService.getMe()
         setUser(me)
-      } catch {
-        setAccessToken(null)
-        localStorage.removeItem('refreshToken')
+      } catch (err: unknown) {
+        // Only clear stored tokens on explicit auth rejection (401/403).
+        // Network errors / server down should NOT log the user out permanently.
+        const status = (err as { response?: { status?: number } })?.response?.status
+        if (status === 401 || status === 403) {
+          setAccessToken(null)
+          localStorage.removeItem('refreshToken')
+        }
+        // Otherwise keep the refresh token — next load will retry.
       } finally {
         setIsLoading(false)
       }
@@ -43,8 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
-    await authService.logout()
-    setUser(null)
+    // Always clear local user state, even if the API call fails.
+    try {
+      await authService.logout()
+    } finally {
+      setUser(null)
+    }
   }
 
   return (

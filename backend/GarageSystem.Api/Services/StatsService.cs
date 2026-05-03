@@ -42,6 +42,8 @@ public record RecapJourneeDto(
     // Liste ORs actifs (non livrés / non annulés)
     List<ORRecapItemDto> ORsActifs);
 
+public record CaJourDto(string Date, decimal Montant);
+
 public class StatsService(ApplicationDbContext db)
 {
     public async Task<DashboardStatsDto> GetDashboardAsync()
@@ -147,6 +149,29 @@ public class StatsService(ApplicationDbContext db)
             .OrderByDescending(a => a.NbMouvements)
             .Take(20)
             .ToListAsync();
+    }
+
+    // ── Mobile : CA des 7 derniers jours ─────────────────────────────────────
+    public async Task<List<CaJourDto>> GetCaSemaineAsync()
+    {
+        var today = DateTime.UtcNow.Date;
+        var debut = today.AddDays(-6); // 7 jours glissants : J-6 → J
+
+        var raw = await db.Factures
+            .Where(f => f.DateCreation >= debut && f.Statut != FactureStatut.Annulee)
+            .GroupBy(f => f.DateCreation.Date)
+            .Select(g => new { Date = g.Key, Montant = g.Sum(f => f.TotalTTC) })
+            .ToListAsync();
+
+        // Remplir les jours sans factures avec 0
+        return Enumerable.Range(0, 7)
+            .Select(i =>
+            {
+                var d = debut.AddDays(i);
+                var montant = raw.FirstOrDefault(r => r.Date == d)?.Montant ?? 0;
+                return new CaJourDto(d.ToString("yyyy-MM-dd"), montant);
+            })
+            .ToList();
     }
 
     // ── Mobile : récap journée ─────────────────────────────────────────────────

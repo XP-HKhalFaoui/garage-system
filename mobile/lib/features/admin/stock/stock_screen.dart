@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import '../../../shared/models/article.dart';
-import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
+
+// ── Provider ──────────────────────────────────────────────────────────────────
 
 final articlesProvider =
     FutureProvider.autoDispose.family<List<Article>, String>(
@@ -35,6 +37,8 @@ final articlesProvider =
   },
 );
 
+// ── Screen ────────────────────────────────────────────────────────────────────
+
 class StockScreen extends HookConsumerWidget {
   const StockScreen({super.key});
 
@@ -45,61 +49,76 @@ class StockScreen extends HookConsumerWidget {
     Timer? debounce;
 
     final articles = ref.watch(articlesProvider(searchQuery.value));
-    final stockBasCount = articles.whenOrNull(
-          data: (list) => list.where((a) => a.isStockBas).length,
+    final critiques = articles.whenOrNull(
+          data: (list) => list.where((a) => a.isStockBas).toList(),
+        ) ??
+        [];
+    final warnings = articles.whenOrNull(
+          data: (list) => list.where((a) => a.isStockWarning).length,
         ) ??
         0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Stock'),
-        actions: [
-          if (stockBasCount > 0)
-            Badge(
-              label: Text('$stockBasCount'),
-              child: const Icon(Icons.warning_amber_outlined,
-                  color: Colors.white),
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: AppColors.surface,
       body: Column(
         children: [
+          // ── AppBar with gradient ─────────────────────────────────────────
+          _StockAppBar(
+            critiquesCount: critiques.length,
+            warningsCount: warnings,
+          ),
+
+          // ── Alertes épinglées ────────────────────────────────────────────
+          if (critiques.isNotEmpty)
+            _AlertesBanner(articles: critiques),
+
+          // ── Search ───────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: searchCtrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Référence, désignation...',
-                prefixIcon: Icon(Icons.search),
-                isDense: true,
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: searchQuery.value.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          searchCtrl.clear();
+                          searchQuery.value = '';
+                        },
+                      )
+                    : null,
               ),
               onChanged: (v) {
                 debounce?.cancel();
-                debounce =
-                    Timer(const Duration(milliseconds: 400), () {
+                debounce = Timer(const Duration(milliseconds: 400), () {
                   searchQuery.value = v;
                 });
               },
             ),
           ),
+
+          // ── List ─────────────────────────────────────────────────────────
           Expanded(
             child: AsyncValueWidget(
               value: articles,
               data: (list) {
                 if (list.isEmpty) {
                   return const EmptyStateWidget(
-                      title: 'Aucun article',
-                      icon: Icons.inventory_2_outlined);
+                      title: 'Aucun article', icon: Icons.inventory_2_outlined);
                 }
                 return RefreshIndicator(
                   onRefresh: () =>
                       ref.refresh(articlesProvider(searchQuery.value).future),
-                  child: ListView.builder(
+                  color: AppColors.primary,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: list.length,
-                    itemBuilder: (_, i) => _ArticleTile(
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) => _ArticleCard(
                       article: list[i],
-                      onTap: () => _showArticleSheet(context, ref, list[i]),
+                      onTap: () => _showArticleSheet(context, list[i]),
                     ),
                   ),
                 );
@@ -108,59 +127,269 @@ class StockScreen extends HookConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {}, // Open scanner
-        tooltip: 'Scanner',
-        child: const Icon(Icons.qr_code_scanner),
-      ),
     );
   }
 
-  void _showArticleSheet(
-      BuildContext context, WidgetRef ref, Article article) {
+  void _showArticleSheet(BuildContext context, Article article) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => _ArticleDetailSheet(article: article),
     );
   }
 }
 
-class _ArticleTile extends StatelessWidget {
-  const _ArticleTile({required this.article, required this.onTap});
-  final Article article;
-  final VoidCallback onTap;
+// ── AppBar ────────────────────────────────────────────────────────────────────
 
-  Color get _stockColor {
-    if (article.isStockBas) return Colors.red;
-    if (article.isStockWarning) return Colors.orange;
-    return Colors.green;
-  }
+class _StockAppBar extends StatelessWidget {
+  const _StockAppBar({required this.critiquesCount, required this.warningsCount});
+  final int critiquesCount;
+  final int warningsCount;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      title: Text(article.designation,
-          style: const TextStyle(fontWeight: FontWeight.w500)),
-      subtitle: Text(article.reference,
-          style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
+    final top = MediaQuery.paddingOf(context).top;
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppGradients.headerSubtle,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 20),
+      child: Row(
         children: [
-          Text(
-            '${article.stockActuel.toStringAsFixed(0)} / ${article.stockMinimum.toStringAsFixed(0)}',
-            style: TextStyle(
-                color: _stockColor, fontWeight: FontWeight.bold),
+          const Expanded(
+            child: Text(
+              'Stock',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-          Text(formatDZD(article.prixVente),
-              style: const TextStyle(fontSize: 12)),
+          if (critiquesCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.error.withOpacity(0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Colors.white, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$critiquesCount critique${critiquesCount > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 }
+
+// ── Alertes banner ────────────────────────────────────────────────────────────
+
+class _AlertesBanner extends StatelessWidget {
+  const _AlertesBanner({required this.articles});
+  final List<Article> articles;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.error.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.inventory_2_rounded,
+                  color: AppColors.error, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Stock critique — ${articles.length} article(s)',
+                style: const TextStyle(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...articles.take(3).map((a) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        a.designation,
+                        style: const TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      '${a.stockActuel.toStringAsFixed(0)} / ${a.stockMinimum.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.error),
+                    ),
+                  ],
+                ),
+              )),
+          if (articles.length > 3)
+            Text(
+              '+ ${articles.length - 3} autre(s)',
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.error),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Article card ──────────────────────────────────────────────────────────────
+
+class _ArticleCard extends StatelessWidget {
+  const _ArticleCard({required this.article, required this.onTap});
+  final Article article;
+  final VoidCallback onTap;
+
+  Color get _levelColor {
+    if (article.isStockBas) return AppColors.error;
+    if (article.isStockWarning) return AppColors.warning;
+    return AppColors.success;
+  }
+
+  double get _levelRatio {
+    if (article.stockMinimum <= 0) return 1.0;
+    return (article.stockActuel / (article.stockMinimum * 2)).clamp(0.0, 1.0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: article.isStockBas
+                ? AppColors.error.withOpacity(0.3)
+                : AppColors.border,
+          ),
+          boxShadow: AppShadows.card,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Icon
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: _levelColor.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.inventory_2_rounded,
+                      color: _levelColor, size: 18),
+                ),
+                const SizedBox(width: 12),
+                // Title
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        article.designation,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        article.reference,
+                        style: const TextStyle(
+                            fontSize: 11, color: Colors.black38),
+                      ),
+                    ],
+                  ),
+                ),
+                // Price
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatDZD(article.prixVente),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                    Text(
+                      '${article.stockActuel.toStringAsFixed(0)} unités',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _levelColor),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Stock level bar
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _levelRatio,
+                      minHeight: 6,
+                      backgroundColor: _levelColor.withOpacity(0.12),
+                      valueColor: AlwaysStoppedAnimation(_levelColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'min ${article.stockMinimum.toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 10, color: Colors.black38),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Article detail sheet ──────────────────────────────────────────────────────
 
 class _ArticleDetailSheet extends StatelessWidget {
   const _ArticleDetailSheet({required this.article});
@@ -168,53 +397,106 @@ class _ArticleDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          20, 12, 20, MediaQuery.paddingOf(context).bottom + 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(article.designation,
               style: Theme.of(context).textTheme.titleLarge),
           Text(article.reference,
-              style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 16),
+              style: const TextStyle(color: Colors.black38, fontSize: 13)),
+          const SizedBox(height: 20),
+
+          // Stats row
           Row(
             children: [
-              _StatItem('Stock actuel',
-                  article.stockActuel.toStringAsFixed(0)),
-              _StatItem('Stock min',
-                  article.stockMinimum.toStringAsFixed(0)),
-              _StatItem('Prix vente', formatDZD(article.prixVente)),
+              _SheetStat('Stock actuel', '${article.stockActuel.toStringAsFixed(0)}',
+                  article.isStockBas ? AppColors.error : AppColors.success),
+              _SheetStat('Stock min', article.stockMinimum.toStringAsFixed(0), Colors.black54),
+              _SheetStat('Prix vente', formatDZD(article.prixVente), AppColors.primary),
               if (article.prixAchat != null)
-                _StatItem('Prix achat', formatDZD(article.prixAchat!)),
+                _SheetStat('Prix achat', formatDZD(article.prixAchat!), Colors.black54),
             ],
           ),
           const SizedBox(height: 16),
+
+          // Level bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: article.stockMinimum > 0
+                  ? (article.stockActuel / (article.stockMinimum * 2)).clamp(0.0, 1.0)
+                  : 1.0,
+              minHeight: 10,
+              backgroundColor: Colors.black.withOpacity(0.06),
+              valueColor: AlwaysStoppedAnimation(
+                  article.isStockBas ? AppColors.error : AppColors.success),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Mouvements
           if (article.mouvements != null && article.mouvements!.isNotEmpty) ...[
             Text('Derniers mouvements',
                 style: Theme.of(context).textTheme.titleSmall),
-            ...article.mouvements!.take(5).map((m) => ListTile(
-                  dense: true,
-                  title: Text(m.type),
-                  subtitle: Text('Stock résultant: ${m.stockResultant}'),
-                  trailing: Text(
-                    '${m.quantite > 0 ? '+' : ''}${m.quantite}',
-                    style: TextStyle(
-                        color: m.quantite > 0 ? Colors.green : Colors.red),
+            const SizedBox(height: 8),
+            ...article.mouvements!.take(5).map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: m.quantite > 0 ? AppColors.success : AppColors.error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(m.type,
+                              style: const TextStyle(fontSize: 13))),
+                      Text(
+                        '${m.quantite > 0 ? '+' : ''}${m.quantite.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: m.quantite > 0 ? AppColors.success : AppColors.error,
+                        ),
+                      ),
+                    ],
                   ),
                 )),
+            const SizedBox(height: 12),
           ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Ajustement'),
-                ),
-              ),
-            ],
+
+          // Action
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.tune_rounded, size: 18),
+              label: const Text('Ajuster le stock'),
+            ),
           ),
         ],
       ),
@@ -222,10 +504,11 @@ class _ArticleDetailSheet extends StatelessWidget {
   }
 }
 
-class _StatItem extends StatelessWidget {
-  const _StatItem(this.label, this.value);
+class _SheetStat extends StatelessWidget {
+  const _SheetStat(this.label, this.value, this.color);
   final String label;
   final String value;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -233,9 +516,11 @@ class _StatItem extends StatelessWidget {
       child: Column(
         children: [
           Text(value,
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 15, color: color)),
           Text(label,
-              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              style: const TextStyle(fontSize: 10, color: Colors.black38),
+              textAlign: TextAlign.center),
         ],
       ),
     );

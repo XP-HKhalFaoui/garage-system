@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart' as launcher;
 import '../../../shared/models/client.dart';
 import '../../../shared/providers/auth_provider.dart';
-import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 

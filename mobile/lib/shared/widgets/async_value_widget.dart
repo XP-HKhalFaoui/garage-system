@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/errors/app_exception.dart';
+export 'empty_state_widget.dart';
 
 class AsyncValueWidget<T> extends StatelessWidget {
   const AsyncValueWidget({
@@ -72,43 +73,7 @@ class ErrorStateWidget extends StatelessWidget {
   }
 }
 
-class EmptyStateWidget extends StatelessWidget {
-  const EmptyStateWidget({
-    super.key,
-    required this.title,
-    this.subtitle,
-    this.icon = Icons.inbox_outlined,
-  });
-
-  final String title;
-  final String? subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            Text(title,
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(subtitle!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
+// EmptyStateWidget is defined in empty_state_widget.dart (re-exported above).
 
 extension BuildContextSnackbar on BuildContext {
   void showSuccessSnackBar(String message) {

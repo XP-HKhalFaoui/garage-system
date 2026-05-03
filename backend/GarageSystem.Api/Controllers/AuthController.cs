@@ -97,7 +97,90 @@ public class AuthController : ControllerBase
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         var user = await _userManager.FindByIdAsync(userId!);
         if (user is null) return NotFound();
+
         var roles = await _userManager.GetRolesAsync(user);
-        return Ok(new { userId = user.Id, email = user.Email, roles });
+
+        // Fetch Nom + Prénom from Employe if linked
+        string? nom = null;
+        string? prenom = null;
+        if (user.EmployeId.HasValue)
+        {
+            var employe = await _db.Employes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == user.EmployeId.Value);
+            if (employe is not null)
+            {
+                nom    = employe.Nom;
+                prenom = employe.Prénom;
+            }
+        }
+
+        return Ok(new
+        {
+            userId    = user.Id,
+            email     = user.Email,
+            roles,
+            employeId = user.EmployeId,
+            nom,
+            prenom,
+        });
+    }
+
+    /// <summary>Admin — lier un compte utilisateur à un employé.</summary>
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("users/{userId:guid}/lier-employe")]
+    public async Task<IActionResult> LierEmploye(Guid userId, [FromBody] LierEmployeDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user is null) return NotFound(new { message = "Utilisateur introuvable" });
+
+        var employe = await _db.Employes.FindAsync(dto.EmployeId);
+        if (employe is null) return NotFound(new { message = "Employé introuvable" });
+
+        // Check not already linked to another user
+        var conflict = await _db.Users
+            .AnyAsync(u => u.EmployeId == dto.EmployeId && u.Id != userId);
+        if (conflict)
+            return Conflict(new { message = "Cet employé est déjà lié à un autre compte" });
+
+        user.EmployeId = dto.EmployeId;
+        await _userManager.UpdateAsync(user);
+
+        return Ok(new { message = $"Compte lié à {employe.Prénom} {employe.Nom}" });
+    }
+
+    /// <summary>Admin — liste tous les utilisateurs avec leur lien employé.</summary>
+    [Authorize(Roles = "Admin")]
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUsers()
+    {
+        var users = await _db.Users.AsNoTracking().ToListAsync();
+        var result = new List<object>();
+
+        foreach (var u in users)
+        {
+            var roles = await _userManager.GetRolesAsync(u);
+            string? nom = null, prenom = null;
+            if (u.EmployeId.HasValue)
+            {
+                var emp = await _db.Employes.AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Id == u.EmployeId.Value);
+                nom    = emp?.Nom;
+                prenom = emp?.Prénom;
+            }
+            result.Add(new
+            {
+                userId    = u.Id,
+                email     = u.Email,
+                isActif   = u.IsActif,
+                roles,
+                employeId = u.EmployeId,
+                nom,
+                prenom,
+            });
+        }
+        return Ok(result);
     }
 }
+
+public record LierEmployeDto(Guid EmployeId);

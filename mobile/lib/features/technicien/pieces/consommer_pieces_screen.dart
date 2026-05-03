@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../shared/models/article.dart';
-import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/providers/auth_provider.dart';
@@ -23,7 +22,6 @@ class ConsommerPiecesScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final modeIndex = useState(0); // 0 = Recherche, 1 = Scanner
     final searchCtrl = useTextEditingController();
-    final searchQuery = useState('');
     final searchResults = useState<List<Article>>([]);
     final isSearching = useState(false);
     Timer? debounce;

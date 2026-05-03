@@ -69,13 +69,13 @@ class PrioriteBadge extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.local_fire_department,
-            size: 12, color: AppColors.urgentColor),
+            size: 12, color: AppColors.urgent),
         const SizedBox(width: 2),
         Text(
           'Urgent',
           style: TextStyle(
             fontSize: 11,
-            color: AppColors.urgentColor,
+            color: AppColors.urgent,
             fontWeight: FontWeight.w600,
           ),
         ),

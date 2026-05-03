@@ -28,7 +28,13 @@ public class StatsController(StatsService svc) : ControllerBase
 
     /// <summary>Mobile — récap de la journée en cours.</summary>
     [HttpGet("recap-journee")]
-    [Authorize] // tous rôles (technicien mobile inclus)
+    [Authorize]
     public async Task<IActionResult> RecapJournee()
         => Ok(await svc.GetRecapJourneeAsync());
+
+    /// <summary>Mobile — CA des 7 derniers jours glissants.</summary>
+    [HttpGet("ca-semaine")]
+    [Authorize]
+    public async Task<IActionResult> CaSemaine()
+        => Ok(await svc.GetCaSemaineAsync());
 }

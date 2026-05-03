@@ -35,13 +35,17 @@ public class OrdreReparationService
             .FirstOrDefaultAsync(v => v.Id == dto.VehiculeId && v.IsActif)
             ?? throw new NotFoundException("Véhicule", dto.VehiculeId);
 
-        var orActif = await _db.OrdresReparation.AnyAsync(o =>
-            o.VehiculeId == dto.VehiculeId &&
-            o.Statut != ORStatut.Livré &&
-            o.Statut != ORStatut.Annulé);
+        var orBloquant = await _db.OrdresReparation
+            .Where(o => o.VehiculeId == dto.VehiculeId &&
+                        o.Statut != ORStatut.Livré &&
+                        o.Statut != ORStatut.Annulé)
+            .Select(o => new { o.Numéro, o.Statut })
+            .FirstOrDefaultAsync();
 
-        if (orActif)
-            throw new BusinessRuleException("Ce véhicule a déjà un OR actif en cours.");
+        if (orBloquant is not null)
+            throw new BusinessRuleException(
+                $"Ce véhicule a déjà un OR actif : {orBloquant.Numéro} ({orBloquant.Statut}). " +
+                $"Clôturez-le avant d'en créer un nouveau.");
 
         if (dto.KilométrageActuel < vehicule.KilométrageActuel)
             throw new BusinessRuleException(

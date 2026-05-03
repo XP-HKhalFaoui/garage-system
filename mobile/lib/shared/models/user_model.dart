@@ -33,11 +33,11 @@ class UserModel {
     }
 
     return UserModel(
-      id: (json['id'] ?? json['sub'] ?? '').toString(),
+      id: (json['userId'] ?? json['id'] ?? json['sub'] ?? '').toString(),
       email: (json['email'] ?? '').toString(),
       roles: rolesList,
       employeId: json['employeId']?.toString(),
-      prenom: json['prenom']?.toString(),
+      prenom: (json['prenom'] ?? json['prénom'])?.toString(),
       nom: json['nom']?.toString(),
     );
   }

@@ -1,0 +1,10 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+services:
+  garagesystemapi:
+    image: garagesystemapi
+    build:
+      context: .
+      dockerfile: backend/GarageSystem.Api/Dockerfile
+    ports:
+      - 8080:8080

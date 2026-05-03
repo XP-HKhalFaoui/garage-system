@@ -8,6 +8,11 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    // Requests marked as skipAuthInterceptor handle their own auth header.
+    if (options.extra['skipAuthInterceptor'] == true) {
+      handler.next(options);
+      return;
+    }
     final token = authService.accessToken;
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -20,6 +25,12 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    // Don't try to refresh for requests that opted out.
+    if (err.requestOptions.extra['skipAuthInterceptor'] == true) {
+      handler.next(err);
+      return;
+    }
+
     if (err.response?.statusCode == 401) {
       final refreshed = await authService.refreshIfNeeded();
       if (refreshed) {

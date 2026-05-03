@@ -25,10 +25,11 @@ public class OrdresReparationController : ControllerBase
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    // GET /api/ordres-reparation?today=true&statut=EnCours&technicienId=...
+    // GET /api/ordres-reparation?actif=true&today=true&statut=EnCours&technicienId=...
     [HttpGet]
     public async Task<IActionResult> GetList(
         [FromQuery] bool?      today,
+        [FromQuery] bool?      actif,
         [FromQuery] ORStatut?  statut,
         [FromQuery] Guid?      technicienId)
     {
@@ -38,12 +39,17 @@ public class OrdresReparationController : ControllerBase
             return Ok(result);
         }
 
-        // liste générale (filtrée par statut / technicien si fournis)
+        // actif=true → tous les OR non terminaux (toutes dates confondues)
         var query = _db.OrdresReparation
             .Include(o => o.Vehicule).ThenInclude(v => v.Client)
             .Include(o => o.Technicien)
             .Include(o => o.Lignes)
             .AsNoTracking();
+
+        if (actif == true)
+            query = query.Where(o =>
+                o.Statut != ORStatut.Livré &&
+                o.Statut != ORStatut.Annulé);
 
         if (statut.HasValue)       query = query.Where(o => o.Statut == statut.Value);
         if (technicienId.HasValue) query = query.Where(o => o.TechnicienId == technicienId.Value);

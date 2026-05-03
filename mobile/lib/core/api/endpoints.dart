@@ -45,7 +45,8 @@ abstract final class Endpoints {
   static const employes = '/api/employes';
 
   // Stats & alertes
-  static const statsRecapJournee = '/api/stats/dashboard';
+  static const statsRecapJournee = '/api/stats/recap-journee';
+  static const statsCaSemaine    = '/api/stats/ca-semaine';
   static const alertesCount = '/api/alertes/count';
   static const alertes = '/api/alertes';
 

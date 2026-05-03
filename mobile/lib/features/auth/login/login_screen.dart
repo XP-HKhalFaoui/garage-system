@@ -10,34 +10,99 @@ class LoginScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final emailCtrl = useTextEditingController(text: 'admin@garage.local');
-    final passwordCtrl = useTextEditingController(text: 'Admin1234!');
-    final formKey = useMemoized(() => GlobalKey<FormState>());
-    final isLoading = useState(false);
-    final errorMessage = useState<String?>(null);
-    final obscurePassword = useState(true);
+    final emailCtrl        = useTextEditingController(text: 'admin@garage.local');
+    final passwordCtrl     = useTextEditingController(text: 'Admin1234!');
+    final formKey          = useMemoized(() => GlobalKey<FormState>());
+    final isLoading        = useState(false);
+    final errorMessage     = useState<String?>(null);
+    final obscurePassword  = useState(true);
+    final biometricAvail   = useState(false);
+    final biometricEnabled = useState(false);
+
+    // Check biometric availability once on mount
+    useEffect(() {
+      Future<void> check() async {
+        final notifier = ref.read(authProvider.notifier);
+        biometricAvail.value   = await notifier.isBiometricAvailable();
+        biometricEnabled.value = await notifier.isBiometricEnabled();
+      }
+      check();
+      return null;
+    }, const []);
+
+    void navigateAfterLogin() {
+      final user = ref.read(authProvider).user;
+      if (user?.isAdmin ?? false) {
+        context.go('/admin/dashboard');
+      } else {
+        context.go('/technicien/mes-or');
+      }
+    }
 
     Future<void> handleLogin() async {
       if (!formKey.currentState!.validate()) return;
-      isLoading.value = true;
+      isLoading.value    = true;
       errorMessage.value = null;
+      final email    = emailCtrl.text.trim();
+      final password = passwordCtrl.text;
       try {
-        await ref
-            .read(authProvider.notifier)
-            .login(emailCtrl.text.trim(), passwordCtrl.text);
-        if (context.mounted) {
-          final user = ref.read(authProvider).user;
-          if (user?.isAdmin ?? false) {
-            context.go('/admin/dashboard');
-          } else {
-            context.go('/technicien/mes-or');
+        await ref.read(authProvider.notifier).login(email, password);
+        if (!context.mounted) return;
+
+        // Offer to enable biometric if available and not yet enabled
+        if (biometricAvail.value && !biometricEnabled.value) {
+          final enable = await showDialog<bool>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Connexion biométrique'),
+              content: const Text(
+                'Voulez-vous activer la connexion par empreinte digitale / Face ID pour les prochaines fois ?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Non merci'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Activer'),
+                ),
+              ],
+            ),
+          );
+          if (enable == true && context.mounted) {
+            await ref.read(authProvider.notifier).enableBiometric(email, password);
+            biometricEnabled.value = true;
           }
         }
+
+        if (context.mounted) navigateAfterLogin();
       } on AppException catch (e) {
         if (context.mounted) errorMessage.value = e.userMessage;
       } catch (e) {
         if (context.mounted) {
           errorMessage.value = 'Erreur de connexion. Vérifiez vos identifiants.';
+        }
+      } finally {
+        if (context.mounted) isLoading.value = false;
+      }
+    }
+
+    Future<void> handleBiometricLogin() async {
+      isLoading.value    = true;
+      errorMessage.value = null;
+      try {
+        final success =
+            await ref.read(authProvider.notifier).biometricLogin();
+        if (!context.mounted) return;
+        if (success) {
+          navigateAfterLogin();
+        } else {
+          errorMessage.value = 'Authentification biométrique annulée ou échouée.';
+        }
+      } catch (e) {
+        if (context.mounted) {
+          errorMessage.value = 'Erreur biométrique. Essayez avec votre mot de passe.';
         }
       } finally {
         if (context.mounted) isLoading.value = false;
@@ -56,8 +121,7 @@ class LoginScreen extends HookConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Logo / Title
-                  const Icon(Icons.car_repair,
-                      size: 80, color: Color(0xFF1A5276)),
+                  const Icon(Icons.car_repair, size: 80, color: Color(0xFF1A5276)),
                   const SizedBox(height: 16),
                   Text(
                     'Garage System',
@@ -116,7 +180,7 @@ class LoginScreen extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Error
+                  // Error message
                   if (errorMessage.value != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -154,6 +218,22 @@ class LoginScreen extends HookConsumerWidget {
                         : const Text('Se connecter',
                             style: TextStyle(fontSize: 16)),
                   ),
+
+                  // Biometric button — only shown if available + user previously enabled it
+                  if (biometricAvail.value && biometricEnabled.value) ...[
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: isLoading.value ? null : handleBiometricLogin,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.fingerprint, size: 24),
+                      label: const Text(
+                        'Se connecter avec biométrie',
+                        style: TextStyle(fontSize: 15),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

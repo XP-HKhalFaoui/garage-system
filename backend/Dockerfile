@@ -52,7 +52,6 @@ FROM build AS publish
 RUN dotnet publish "GarageSystem.Api/GarageSystem.Api.csproj" \
     --configuration Release     \
     --output       /app/publish \
-    --no-restore                \
     /p:UseAppHost=false         \
     /p:PublishTrimmed=false     \
     /p:DebugType=None           \

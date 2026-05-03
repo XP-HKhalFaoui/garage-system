@@ -21,15 +21,29 @@ enum ORStatut {
         annule => 'Annulé',
       };
 
-  static ORStatut fromString(String value) => switch (value.toLowerCase()) {
-        'enattente' => enAttente,
-        'encours' => enCours,
-        'suspendu' => suspendu,
-        'terminetechnicien' => termineTechnicien,
-        'livre' => livre,
-        'annule' => annule,
-        _ => enAttente,
-      };
+  static ORStatut fromString(String value) {
+    // Normalize: lowercase + strip accents
+    final v = value
+        .toLowerCase()
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('î', 'i')
+        .replaceAll('û', 'u')
+        .replaceAll('ô', 'o')
+        .replaceAll('à', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('ù', 'u');
+    return switch (v) {
+      'enattente'          => enAttente,
+      'encours'            => enCours,
+      'suspendu'           => suspendu,
+      'terminetechnicien'  => termineTechnicien,
+      'livre'              => livre,
+      'annule'             => annule,
+      _ => enAttente,
+    };
+  }
 }
 
 enum Priorite { normal, urgent }

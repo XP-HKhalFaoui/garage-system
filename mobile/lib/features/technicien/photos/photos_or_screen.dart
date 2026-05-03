@@ -3,8 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:io';
-import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/config/app_config.dart';
 import '../../../shared/providers/auth_provider.dart';
@@ -64,8 +62,6 @@ class PhotosOrScreen extends HookConsumerWidget {
       try {
         final api = ref.read(apiClientProvider);
         // Multipart upload
-        final file = File(picked.path);
-        final bytes = await file.readAsBytes();
         // POST as multipart form data via raw dio
         await api.post<void>(
           Endpoints.orPhotos(orId),
